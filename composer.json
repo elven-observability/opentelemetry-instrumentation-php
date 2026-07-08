@@ -1,0 +1,108 @@
+{
+  "name": "elven-observability/opentelemetry-instrumentation-php",
+  "description": "Modern fail-open OpenTelemetry instrumentation for PHP applications, with first-class Laravel, FrankenPHP, Symfony and PSR integrations.",
+  "type": "library",
+  "license": "Apache-2.0",
+  "keywords": [
+    "opentelemetry",
+    "observability",
+    "otel",
+    "tracing",
+    "metrics",
+    "logs",
+    "laravel",
+    "symfony",
+    "frankenphp",
+    "psr"
+  ],
+  "homepage": "https://github.com/elven-observability/opentelemetry-instrumentation-php",
+  "support": {
+    "issues": "https://github.com/elven-observability/opentelemetry-instrumentation-php/issues",
+    "source": "https://github.com/elven-observability/opentelemetry-instrumentation-php"
+  },
+  "require": {
+    "php": ">=8.2 <9.0",
+    "ext-json": "*",
+    "guzzlehttp/psr7": "^2.7",
+    "monolog/monolog": "^2.9 || ^3.5",
+    "nyholm/psr7": "^1.8",
+    "open-telemetry/api": "^1.0",
+    "open-telemetry/exporter-otlp": "^1.4",
+    "open-telemetry/opentelemetry-logger-monolog": "^1.2",
+    "open-telemetry/sdk": "^1.14",
+    "open-telemetry/sem-conv": "^1.32",
+    "php-http/discovery": "^1.20",
+    "psr/container": "^1.1 || ^2.0",
+    "psr/http-client": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.1 || ^2.0",
+    "psr/http-server-handler": "^1.0",
+    "psr/http-server-middleware": "^1.0",
+    "psr/log": "^1.1 || ^2.0 || ^3.0",
+    "symfony/http-client": "^6.4 || ^7.0 || ^8.0"
+  },
+  "require-dev": {
+    "guzzlehttp/guzzle": "^7.9",
+    "mockery/mockery": "^1.6",
+    "phpstan/phpstan": "^2.1",
+    "phpunit/phpunit": "^11.5",
+    "squizlabs/php_codesniffer": "^3.13 || ^4.0",
+    "symfony/console": "^6.4 || ^7.0 || ^8.0",
+    "symfony/event-dispatcher": "^6.4 || ^7.0 || ^8.0",
+    "symfony/http-foundation": "^6.4 || ^7.0 || ^8.0",
+    "symfony/http-kernel": "^6.4 || ^7.0 || ^8.0"
+  },
+  "suggest": {
+    "ext-opentelemetry": "Enables upstream zero-code auto-instrumentation packages when desired.",
+    "ext-protobuf": "Recommended by the upstream OTLP exporter for lower CPU and memory overhead in production.",
+    "ext-curl": "Improves HTTP client/exporter performance in many PHP deployments.",
+    "laravel/framework": "Enables the Laravel service provider, HTTP middleware, database/cache/queue/event instrumentation and log enrichment.",
+    "symfony/framework-bundle": "Enables Symfony bundle-style registration and event subscribers.",
+    "slim/slim": "Enables Slim/PSR middleware examples and route naming support.",
+    "yiisoft/yii2": "Can be instrumented through the generic HTTP and event helpers.",
+    "open-telemetry/opentelemetry-auto-laravel": "Optional upstream Laravel auto-instrumentation when ext-opentelemetry is installed.",
+    "open-telemetry/opentelemetry-auto-symfony": "Optional upstream Symfony auto-instrumentation when ext-opentelemetry is installed.",
+    "open-telemetry/opentelemetry-auto-slim": "Optional upstream Slim auto-instrumentation when ext-opentelemetry is installed."
+  },
+  "autoload": {
+    "psr-4": {
+      "Elven\\Observability\\Php\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Elven\\Observability\\Php\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Elven\\Observability\\Php\\Integrations\\Laravel\\ElvenObservabilityServiceProvider"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test:unit": "phpunit --testsuite Unit",
+    "test:integration": "phpunit --testsuite Integration",
+    "lint": "find src tests examples -name '*.php' -print0 | xargs -0 -n1 php -l",
+    "stan": "phpstan analyse --memory-limit=1G",
+    "cs": "phpcs",
+    "check": [
+      "@lint",
+      "@cs",
+      "@stan",
+      "@test"
+    ],
+    "bench": "php benchmarks/run.php",
+    "collector:fake": "php examples/fake-collector/server.php"
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
