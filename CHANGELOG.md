@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - Unreleased
+## 0.1.0 - 2026-07-08
 
 - Initial modern PHP 8.2+ observability package.
 - Added OpenTelemetry SDK/OTLP bootstrap.
@@ -8,4 +8,3 @@
 - Added Laravel, Symfony, PSR-15, FrankenPHP and Guzzle integrations.
 - Added privacy/redaction defaults.
 - Added fake collector, Docker validation, CI and tests.
-
