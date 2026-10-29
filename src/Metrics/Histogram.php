@@ -13,6 +13,7 @@ final class Histogram
     public function __construct(
         private readonly ?HistogramInterface $histogram,
         private readonly AttributeRedactor $redactor,
+        private readonly string $identity = '',
     ) {
     }
 
@@ -24,7 +25,15 @@ final class Histogram
         }
 
         try {
-            $this->histogram->record($amount, $this->redactor->attributes($attributes, true));
+            if (!is_finite((float) $amount)) {
+                return;
+            }
+            $safe = $this->redactor->attributes($attributes, true);
+            $safe = $this->redactor->budget()->metricAttributes('histogram:' . $this->identity, $safe);
+            if ($safe === null) {
+                return;
+            }
+            $this->histogram->record($amount, $safe);
         } catch (Throwable) {
         }
     }

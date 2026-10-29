@@ -13,6 +13,7 @@ final class Counter
     public function __construct(
         private readonly ?CounterInterface $counter,
         private readonly AttributeRedactor $redactor,
+        private readonly string $identity = '',
     ) {
     }
 
@@ -24,7 +25,15 @@ final class Counter
         }
 
         try {
-            $this->counter->add($amount, $this->redactor->attributes($attributes, true));
+            if (!is_finite((float) $amount)) {
+                return;
+            }
+            $safe = $this->redactor->attributes($attributes, true);
+            $safe = $this->redactor->budget()->metricAttributes('counter:' . $this->identity, $safe);
+            if ($safe === null) {
+                return;
+            }
+            $this->counter->add($amount, $safe);
         } catch (Throwable) {
         }
     }

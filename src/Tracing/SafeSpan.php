@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elven\Observability\Php\Tracing;
 
 use Elven\Observability\Php\Core\Diagnostics;
+use Elven\Observability\Php\Export\LimitedJson;
 use Elven\Observability\Php\Privacy\AttributeRedactor;
 use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\StatusCode;
@@ -14,6 +15,9 @@ use Throwable;
 final class SafeSpan
 {
     private bool $ended = false;
+    private int $remainingBytes = 61440;
+    /** @var array<string, int> */
+    private array $attributeBytes = [];
 
     public function __construct(
         private readonly ?SpanInterface $span,
@@ -35,12 +39,23 @@ final class SafeSpan
 
     public function setAttribute(string $key, mixed $value): self
     {
-        if ($this->span === null || $this->redactor === null) {
+        if ($this->ended || $this->span === null || $this->redactor === null) {
             return $this;
         }
 
         try {
-            $this->span->setAttribute($key, $this->redactor->value($key, $value));
+            if (strlen($key) > 255) {
+                return $this;
+            }
+            $safe = $this->redactor->value($key, $value);
+            $previous = $this->attributeBytes[$key] ?? 0;
+            $encoded = LimitedJson::encode([$key => $safe], $this->remainingBytes + $previous);
+            if ($encoded === null) {
+                return $this;
+            }
+            $this->remainingBytes += $previous - strlen($encoded);
+            $this->attributeBytes[$key] = strlen($encoded);
+            $this->span->setAttribute($key, $safe);
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span attribute failed', $throwable);
         }
@@ -66,7 +81,14 @@ final class SafeSpan
         }
 
         try {
-            $this->span->addEvent($name, $this->redactor->attributes($attributes));
+            $name = substr($this->redactor->redactString($name), 0, 255);
+            $safe = $this->redactor->attributes($attributes);
+            $encoded = LimitedJson::encode([$name, $safe], $this->remainingBytes);
+            if ($encoded === null) {
+                return $this;
+            }
+            $this->remainingBytes -= strlen($encoded);
+            $this->span->addEvent($name, $safe);
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span event failed', $throwable);
         }
@@ -82,7 +104,10 @@ final class SafeSpan
         }
 
         try {
-            $this->span->recordException($throwable, $this->redactor->attributes($attributes));
+            $this->addEvent('exception', array_merge($attributes, [
+                'exception.type' => $throwable::class,
+                'exception.message' => $throwable->getMessage(),
+            ]));
         } catch (Throwable $recordFailure) {
             $this->diagnostics?->exception('Span exception recording failed', $recordFailure);
         }
@@ -97,7 +122,7 @@ final class SafeSpan
         }
 
         try {
-            $this->span->setStatus($code, $description);
+            $this->span->setStatus($code, $description === null ? null : $this->redactor?->redactString($description));
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span status failed', $throwable);
         }

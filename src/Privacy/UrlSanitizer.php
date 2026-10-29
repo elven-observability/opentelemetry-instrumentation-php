@@ -15,7 +15,7 @@ final class UrlSanitizer
             return '/';
         }
 
-        $path = $parts['path'] ?? '/';
+        $path = $this->sanitizePath($parts['path'] ?? '/');
         $query = '';
         if (isset($parts['query']) && $parts['query'] !== '') {
             parse_str($parts['query'], $params);
@@ -24,6 +24,8 @@ final class UrlSanitizer
                     $params[$key] = '[REDACTED]';
                 } elseif (is_array($value)) {
                     $params[$key] = '[ARRAY]';
+                } else {
+                    $params[$key] = AttributeRedactor::redactText((string) $value);
                 }
             }
             $query = http_build_query($params);
@@ -36,7 +38,7 @@ final class UrlSanitizer
     {
         $parts = parse_url($url);
 
-        return is_array($parts) && isset($parts['path']) ? $parts['path'] : '/';
+        return is_array($parts) && isset($parts['path']) ? $this->sanitizePath($parts['path']) : '/';
     }
 
     public function host(string $url): ?string
@@ -44,5 +46,24 @@ final class UrlSanitizer
         $parts = parse_url($url);
 
         return is_array($parts) && isset($parts['host']) ? $parts['host'] : null;
+    }
+
+    private function sanitizePath(string $path): string
+    {
+        $segments = explode('/', $path);
+        $sensitive = false;
+        foreach ($segments as &$segment) {
+            if ($segment === '') {
+                continue;
+            }
+            $decoded = rawurldecode($segment);
+            $redacted = AttributeRedactor::redactText($decoded);
+            if ($sensitive || $redacted !== $decoded) {
+                $segment = '[REDACTED]';
+            }
+            $sensitive = preg_match(self::SENSITIVE_QUERY_PATTERN, $decoded) === 1;
+        }
+
+        return implode('/', $segments);
     }
 }

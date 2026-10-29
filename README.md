@@ -2,6 +2,9 @@
 
 Modern, fail-open observability for PHP 8.2+ applications.
 
+Authoritative documentation: [docs.elven.works](https://docs.elven.works/).
+Documentation source and corrections: [elvenworks-ps/docs.elven.works](https://github.com/elvenworks-ps/docs.elven.works).
+
 This package provides a clean Elven layer on top of the official OpenTelemetry PHP SDK:
 
 - traces, metrics and OTLP logs;
@@ -28,12 +31,18 @@ Supported test matrix:
 - PHP 8.4
 - PHP 8.5
 
-PHP 8.0 and 8.1 are intentionally not supported because they are end-of-life in July 2026 and current upstream OTLP exporter support starts at PHP 8.2.
+PHP 8.0 and 8.1 are outside this package's supported matrix. This is the Elven package policy, not an assertion that the upstream SDK/exporter requires PHP 8.2; verify upstream package requirements separately.
 
 ## Install
 
+The verified distribution method is an explicit Git/VCS repository. Public Packagist lookup returned HTTP 404 on 2026-10-29; this is not a target-network diagnosis and no Packagist token is required to consume Git tags.
+
+Installation from Git tag `v0.1.0` was verified, but that baseline contains the audit findings. The next candidate is the optional `0.2.0-rc.1` / `v0.2.0-rc.1`, **not published yet**. This is not the previously planned transparent `0.1.1` patch. Existing stable `^0.1` constraints do not select this new minor RC. Review [MIGRATION.md](MIGRATION.md) before opting in. The following commands are conditional on the reviewed immutable tag existing:
+
 ```bash
-composer require elven-observability/opentelemetry-instrumentation-php
+composer config repositories.elven-php git https://github.com/elven-observability/opentelemetry-instrumentation-php
+# Only after the reviewed immutable v0.2.0-rc.1 tag is published:
+composer require elven-observability/opentelemetry-instrumentation-php:0.2.0-rc.1
 ```
 
 The package is safe by default: installing it does not export telemetry until `ELVEN_OTEL_ENABLED=true`
@@ -124,6 +133,8 @@ The provider automatically:
 - prepends HTTP middleware;
 - adds queue job spans;
 - adds Monolog trace correlation when possible.
+
+Database, cache and event helpers require explicit calls; the provider does not automatically hook those framework events.
 
 Manual business metric:
 
@@ -311,6 +322,18 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:43189
 - Do not put high-cardinality values in metric labels.
 - Do not use request IDs, trace IDs, user IDs, order IDs, emails, CPF, tokens or raw paths as metric labels.
 - In worker mode, always call lifecycle reset/flush hooks.
+- Export is synchronous. The configured export timeout (clamped to 1-30000ms) is shared by all signals and retries in a flush/shutdown, not restarted per attempt. Checks are cooperative around bounded serialization and I/O; this is not a hard real-time CPU/RSS guarantee.
+- The modern circuit breaker is per transport instance, not shared across PHP-FPM requests or signals.
+- The exporter uses a dedicated HTTP transport, never application HTTP handlers. Application PSR discovery, custom handlers and client-specific mTLS/compression/proxy settings are not inherited: this is an explicit migration boundary, not feature-equivalent PSR transport replacement. Retries are capped at three and local waits at 100ms and the remaining shared deadline. A longer `Retry-After` defers that transport instead of retrying early or sleeping beyond the deadline. Redirects stay disabled and TLS verification stays enabled.
+- Queued trace/log data and retained metric series share an 8MiB logical-data budget, with 64KiB per trace/log record, including SDK links/resource/scope data. Records exceeding admission limits are dropped. This accounting is not process RSS; direct SDK metadata is accounted, not a promise of automatic PII sanitization outside the safe facade.
+- Serialized payload acceptance/transmission is capped at 4MiB per flush in total, including retry attempts. The official SDK serializer has bounded queue input; an oversized encoded batch is rejected before network I/O. Responses are capped at 16KiB headers and 64KiB body; later batches are skipped after the shared deadline. These are logical admission/transport limits, not an exact allocator ceiling.
+- The default compatibility profile accepts OS-resolved collector hostnames, endpoint Basic-auth userinfo and explicit headers. CLI `HTTP_PROXY` is honored, while CGI/FPM's uppercase `HTTP_PROXY` is ignored against httpoxy; lowercase configured proxies and `NO_PROXY` remain supported. Streams support HTTP proxies, including HTTPS CONNECT; other proxy profiles require cURL and fail telemetry rather than bypassing required egress.
+- **DNS limit:** compatibility mode cannot preempt synchronous OS DNS resolution. Socket/transfer deadlines do not establish a hard DNS/whole-request deadline. Opt in with `ELVEN_OTEL_STRICT_RESOLVER=true` to require async-DNS cURL for hostnames, or literal IP/localhost for streams. This stricter resolver profile is not enabled silently. TLS verification and redirect protection are identical in both profiles. Qualified proxy/framing behavior does not imply universal HTTP-client compatibility.
+- Internal OpenTelemetry logging remains application-owned (`OTEL_LOG_LEVEL`); bootstrap does not replace the process-wide log writer.
+- Instrument caches default to 256 names per kind per SDK lifetime (`max_metric_instruments_per_kind` / `ELVEN_OTEL_MAX_METRIC_INSTRUMENTS_PER_KIND`); further names are no-op. Use static names. Review explicit larger budgets for existing workloads.
+- Each instrument defaults to 512 admitted metric series (`metric_cardinality_limit` / `ELVEN_OTEL_METRIC_CARDINALITY_LIMIT`) plus a reserved `otel.metric.overflow=true` series. Later combinations aggregate there, including across successful DELTA collections; existing series remain writable. Series share the 8MiB admission budget, so actual backpressure can still drop new instruments. Count limits do not bound all allocator overhead or preserve every high-cardinality label combination.
+- Attributes are limited to 128 entries per call; nested values have a depth limit of 4 and a 64-node traversal budget. Exception events omit raw stack traces.
+- Do not install both manual middleware and upstream auto-instrumentation for the same operation without checking for duplicate spans.
 
 ## What This Package Does Not Promise
 
@@ -318,3 +341,4 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:43189
 - It does not support PHP 8.0/8.1.
 - It does not mutate tenant identity into resource attributes per request.
 - It does not capture bodies/payloads by default.
+- Laravel has a provider, HTTP middleware and queue listeners; DB/cache/event helpers are manual, not automatic framework hooks. Slim/Mezzio support is PSR-15 middleware, not a version-tested native adapter. Framework and worker acceptance must be tested in the target application.

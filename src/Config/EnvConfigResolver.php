@@ -10,6 +10,9 @@ final class EnvConfigResolver
     public function resolve(array $config = []): ObservabilityConfig
     {
         $enabled = $this->bool($config, 'enabled', 'ELVEN_OTEL_ENABLED', false);
+        if ($this->env('ELVEN_OTEL_ENABLED') !== null && !$this->envBool('ELVEN_OTEL_ENABLED', false)) {
+            $enabled = false;
+        }
         if ($this->envBool('OTEL_SDK_DISABLED', false)) {
             $enabled = false;
         }
@@ -83,6 +86,8 @@ final class EnvConfigResolver
             maxAttributeLength: max(16, $this->int($config, 'max_attribute_length', 'ELVEN_OTEL_MAX_ATTRIBUTE_LENGTH', 2048)),
             workerResetStrict: $this->bool($config, 'worker_reset_strict', 'ELVEN_OTEL_WORKER_RESET_STRICT', true),
             logCorrelationEnabled: $this->bool($config, 'log_correlation_enabled', 'ELVEN_OTEL_LOG_CORRELATION_ENABLED', true),
+            metricCardinalityLimit: max(1, $this->int($config, 'metric_cardinality_limit', 'ELVEN_OTEL_METRIC_CARDINALITY_LIMIT', 512)),
+            maxMetricInstrumentsPerKind: max(1, $this->int($config, 'max_metric_instruments_per_kind', 'ELVEN_OTEL_MAX_METRIC_INSTRUMENTS_PER_KIND', 256)),
         );
     }
 
