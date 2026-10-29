@@ -19,7 +19,7 @@ final class FakeCollectorTest extends TestCase
         $this->store = sys_get_temp_dir() . '/elven-fake-collector-' . bin2hex(random_bytes(4)) . '.jsonl';
         $this->port = $this->freePort();
         $cmd = sprintf(
-            'ELVEN_FAKE_COLLECTOR_STORE=%s php -S 127.0.0.1:%d %s >/dev/null 2>&1',
+            'ELVEN_FAKE_COLLECTOR_STORE=%s exec php -S 127.0.0.1:%d %s >/dev/null 2>&1',
             escapeshellarg($this->store),
             $this->port,
             escapeshellarg(dirname(__DIR__, 2) . '/examples/fake-collector/server.php'),
