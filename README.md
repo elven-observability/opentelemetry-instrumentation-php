@@ -31,7 +31,7 @@ Supported test matrix:
 - PHP 8.4
 - PHP 8.5
 
-PHP 8.0 and 8.1 are intentionally not supported because they are end-of-life in July 2026 and current upstream OTLP exporter support starts at PHP 8.2.
+PHP 8.0 and 8.1 are outside this package's supported matrix. This is the Elven package policy, not an assertion that the upstream SDK/exporter requires PHP 8.2; verify upstream package requirements separately.
 
 ## Install
 
