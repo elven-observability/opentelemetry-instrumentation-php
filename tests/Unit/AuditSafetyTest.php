@@ -60,7 +60,9 @@ final class AuditSafetyTest extends TestCase
 
     public function testExceptionAndStatusAreRedactedWithoutRawStackTrace(): void
     {
-        $provider = new TracerProvider(resource: \OpenTelemetry\SDK\Resource\ResourceInfo::emptyResource());
+        $provider = new TracerProvider(resource: \OpenTelemetry\SDK\Resource\ResourceInfo::create(
+            \OpenTelemetry\SDK\Common\Attribute\Attributes::create([]),
+        ));
         $span = $provider->getTracer('audit')->spanBuilder('audit')->startSpan();
         $redactor = new AttributeRedactor((new EnvConfigResolver())->resolve());
         $safe = new SafeSpan($span, null, $redactor, new Diagnostics(false));

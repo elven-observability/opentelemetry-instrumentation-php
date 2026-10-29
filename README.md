@@ -35,15 +35,14 @@ PHP 8.0 and 8.1 are outside this package's supported matrix. This is the Elven p
 
 ## Install
 
-```bash
-composer require elven-observability/opentelemetry-instrumentation-php
-```
+The verified distribution method is an explicit Git/VCS repository. Public Packagist lookup returned HTTP 404 on 2026-10-29; this is not a target-network diagnosis and no Packagist token is required to consume Git tags.
 
-If the package is not available in your Composer registry, configure the source repository first:
+Installation from Git tag `v0.1.0` was verified, but that baseline contains the audit findings. The next candidate is `0.1.1` / `v0.1.1`, **not published by this audit**. Use only the immutable tag approved and published by the parent after independent review. The following commands are for that approved release, not a claim that its tag already exists:
 
 ```bash
-composer config repositories.elven-php vcs https://github.com/elven-observability/opentelemetry-instrumentation-php
-composer require elven-observability/opentelemetry-instrumentation-php:^0.1
+composer config repositories.elven-php git https://github.com/elven-observability/opentelemetry-instrumentation-php
+# Only after the parent approves and publishes the immutable v0.1.1 tag:
+composer require elven-observability/opentelemetry-instrumentation-php:0.1.1
 ```
 
 The package is safe by default: installing it does not export telemetry until `ELVEN_OTEL_ENABLED=true`
@@ -323,9 +322,12 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:43189
 - Do not put high-cardinality values in metric labels.
 - Do not use request IDs, trace IDs, user IDs, order IDs, emails, CPF, tokens or raw paths as metric labels.
 - In worker mode, always call lifecycle reset/flush hooks.
-- Export is synchronous during flush/shutdown. A timeout applies per transport attempt, not to the entire request. Prefer a local collector and keep retries at their default of zero.
+- Export is synchronous. The configured export timeout (clamped to 1-30000ms) is shared by all signals and retries in a flush/shutdown, not restarted per attempt. Checks are cooperative around bounded serialization and I/O; this is not a hard real-time CPU/RSS guarantee.
 - The modern circuit breaker is per transport instance, not shared across PHP-FPM requests or signals.
-- The exporter uses a dedicated Symfony HTTP client with redirects disabled and a total duration limit per attempt; it does not reuse application HTTP handlers.
+- The exporter uses a dedicated bounded HTTP transport, never application HTTP handlers. Retries are capped at three, each wait (including `Retry-After`) at 100ms and by the remaining shared deadline. Redirects stay disabled and TLS verification stays enabled.
+- Queued trace/log data and retained metric series share an 8MiB logical-data budget, with 64KiB per trace/log record and at most 512 metric series. Records exceeding admission limits are dropped. This accounting is not process RSS.
+- Serialized payload acceptance/transmission is capped at 4MiB per flush in total, including retry attempts. The official SDK serializer has bounded queue input; an oversized encoded batch is rejected before network I/O. Responses are capped at 16KiB headers and 64KiB body; later batches are skipped after the shared deadline. These are logical admission/transport limits, not an exact allocator ceiling.
+- Without cURL, nonblocking streams support literal IP/localhost endpoints and uncompressed responses, including bounded chunked framing. Hostname resolution is not attempted without a bounded resolver: install async-DNS-enabled cURL for hostname endpoints. Unsupported/ambiguous framing fails telemetry, never the application.
 - Internal OpenTelemetry logging remains application-owned (`OTEL_LOG_LEVEL`); bootstrap does not replace the process-wide log writer.
 - Instrument caches accept at most 256 names per kind per SDK lifetime; further names are no-op. Use static names, not identifiers.
 - At most 512 sanitized metric attribute combinations are retained per SDK lifetime, shared by instruments. Further combinations aggregate with `otel.metric.overflow=true`; existing combinations continue normally. This bounds retained cardinality, not total series across restarts.

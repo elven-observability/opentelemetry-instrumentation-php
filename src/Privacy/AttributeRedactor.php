@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elven\Observability\Php\Privacy;
 
 use Elven\Observability\Php\Config\ObservabilityConfig;
+use Elven\Observability\Php\Export\ExportBudget;
 
 final class AttributeRedactor
 {
@@ -14,6 +15,7 @@ final class AttributeRedactor
     private const MAX_METRIC_ATTRIBUTE_SETS = 512;
     /** @var array<string, true> */
     private array $metricAttributeSets = [];
+    private ExportBudget $budget;
     private const SENSITIVE_KEY_PATTERN = '/authorization|cookie|set-cookie|x-api-key|api[_-]?key|token|password|passwd|pwd|secret|bearer|session|csrf|jwt/i';
     private const JWT_PATTERN = '/\beyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/';
     private const EMAIL_PATTERN = '/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i';
@@ -22,6 +24,12 @@ final class AttributeRedactor
 
     public function __construct(private readonly ObservabilityConfig $config)
     {
+        $this->budget = new ExportBudget($config->timeoutMillis);
+    }
+
+    public function budget(): ExportBudget
+    {
+        return $this->budget;
     }
 
     /**
@@ -31,6 +39,7 @@ final class AttributeRedactor
     public function attributes(iterable $attributes, bool $forMetric = false): array
     {
         $out = [];
+        $bytes = 0;
         foreach ($attributes as $key => $value) {
             if (count($out) >= self::MAX_ATTRIBUTES) {
                 break;
@@ -42,7 +51,13 @@ final class AttributeRedactor
             if ($forMetric && !$this->metricLabelAllowed($key)) {
                 continue;
             }
-            $out[$key] = $this->value($key, $value);
+            $safe = $this->value($key, $value);
+            $encoded = json_encode([$key => $safe], JSON_INVALID_UTF8_SUBSTITUTE);
+            if ($encoded === false || strlen($encoded) > 16384 - $bytes) {
+                break;
+            }
+            $bytes += strlen($encoded);
+            $out[$key] = $safe;
         }
 
         if ($forMetric) {
@@ -63,11 +78,11 @@ final class AttributeRedactor
     public function value(string $key, mixed $value): mixed
     {
         $remaining = self::MAX_VALUE_ITEMS;
-
-        return $this->boundedValue($key, $value, 0, $remaining);
+        $bytes = min(8192, $this->config->maxAttributeLength);
+        return $this->boundedValue($key, $value, 0, $remaining, $bytes);
     }
 
-    private function boundedValue(string $key, mixed $value, int $depth, int &$remaining, bool $raw = false): mixed
+    private function boundedValue(string $key, mixed $value, int $depth, int &$remaining, int &$bytes, bool $raw = false): mixed
     {
         $remaining--;
         $raw = $raw || !$this->config->redactionEnabled || $this->config->isRawAttributeAllowed($key);
@@ -77,7 +92,8 @@ final class AttributeRedactor
         }
 
         if (is_string($value)) {
-            $value = $this->truncateString($value);
+            $value = substr($this->truncateString($value), 0, max(0, $bytes));
+            $bytes -= strlen($value);
 
             return $raw ? $value : $this->redactString($value);
         }
@@ -88,16 +104,17 @@ final class AttributeRedactor
             }
             $redacted = [];
             foreach ($value as $itemKey => $itemValue) {
-                if ($remaining <= 0) {
+                if ($remaining <= 0 || $bytes <= 0) {
                     break;
                 }
                 $itemKey = is_string($itemKey) ? substr($itemKey, 0, 255) : $itemKey;
-                $redacted[$itemKey] = $this->boundedValue((string) $itemKey, $itemValue, $depth + 1, $remaining, $raw);
+                $redacted[$itemKey] = $this->boundedValue((string) $itemKey, $itemValue, $depth + 1, $remaining, $bytes, $raw);
             }
 
             return $redacted;
         }
 
+        $bytes -= 16;
         return is_object($value) ? '[object ' . $value::class . ']' : (is_resource($value) ? '[resource]' : $value);
     }
 

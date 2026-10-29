@@ -7,6 +7,12 @@ namespace Elven\Observability\Php\Sdk;
 use Elven\Observability\Php\Config\ObservabilityConfig;
 use Elven\Observability\Php\Core\Diagnostics;
 use Elven\Observability\Php\Export\CircuitBreakerTransport;
+use Elven\Observability\Php\Export\BoundedTransport;
+use Elven\Observability\Php\Export\ExportBudget;
+use Elven\Observability\Php\Export\BudgetedSpanProcessor;
+use Elven\Observability\Php\Export\BudgetedLogProcessor;
+use Elven\Observability\Php\Export\DeadlineExporter;
+use Elven\Observability\Php\Export\DeadlineMetricExporter;
 use Elven\Observability\Php\Logs\LogFacade;
 use Elven\Observability\Php\Metrics\MetricFacade;
 use Elven\Observability\Php\Privacy\AttributeRedactor;
@@ -17,11 +23,9 @@ use OpenTelemetry\API\Common\Time\Clock;
 use OpenTelemetry\API\Trace\Propagation\TraceContextPropagator;
 use OpenTelemetry\Contrib\Otlp\LogsExporter;
 use OpenTelemetry\Contrib\Otlp\MetricExporter;
-use Nyholm\Psr7\Factory\Psr17Factory;
 use OpenTelemetry\Contrib\Otlp\Protocols;
 use OpenTelemetry\Contrib\Otlp\SpanExporter;
 use OpenTelemetry\SDK\Common\Attribute\Attributes;
-use OpenTelemetry\SDK\Common\Export\Http\PsrTransportFactory;
 use OpenTelemetry\SDK\Logs\LoggerProvider;
 use OpenTelemetry\SDK\Logs\LoggerProviderInterface;
 use OpenTelemetry\SDK\Logs\Processor\BatchLogRecordProcessor;
@@ -39,8 +43,6 @@ use OpenTelemetry\SDK\Trace\SpanProcessor\BatchSpanProcessor;
 use OpenTelemetry\SDK\Trace\TracerProvider;
 use OpenTelemetry\SDK\Trace\TracerProviderInterface;
 use Throwable;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpClient\Psr18Client;
 
 final class SdkBuilder
 {
@@ -56,9 +58,10 @@ final class SdkBuilder
         }
 
         $resource = $this->resource($config);
-        $meterProvider = $this->buildMeterProvider($config, $resource, $diagnostics);
-        $tracerProvider = $this->buildTracerProvider($config, $resource, $diagnostics);
-        $loggerProvider = $this->buildLoggerProvider($config, $resource, $diagnostics);
+        $budget = $redactor->budget();
+        $meterProvider = $this->buildMeterProvider($config, $resource, $diagnostics, $budget);
+        $tracerProvider = $this->buildTracerProvider($config, $resource, $diagnostics, $budget);
+        $loggerProvider = $this->buildLoggerProvider($config, $resource, $diagnostics, $budget);
 
         $tracer = new SafeTracer(
             $tracerProvider?->getTracer('elven-observability-php', ObservabilityVersion::VERSION),
@@ -110,21 +113,22 @@ final class SdkBuilder
         $attributes['telemetry.sdk.language'] = 'php';
         $attributes['telemetry.sdk.version'] = ObservabilityVersion::VERSION;
 
-        return ResourceInfo::create(Attributes::create($attributes));
+        return ResourceInfo::create(Attributes::create((new AttributeRedactor($config))->attributes($attributes)));
     }
 
     private function buildTracerProvider(
         ObservabilityConfig $config,
         ResourceInfo $resource,
         Diagnostics $diagnostics,
+        ExportBudget $budget,
     ): ?TracerProviderInterface {
         if (!$config->shouldExportTraces()) {
             return new TracerProvider([], $this->sampler($config), $resource);
         }
 
         try {
-            $transport = $this->transport($config, 'traces');
-            $exporter = new SpanExporter($transport);
+            $transport = $this->transport($config, 'traces', $budget);
+            $exporter = new DeadlineExporter(new SpanExporter($transport), $budget);
             $processor = new BatchSpanProcessor(
                 $exporter,
                 Clock::getDefault(),
@@ -136,7 +140,7 @@ final class SdkBuilder
                 null,
             );
 
-            return new TracerProvider($processor, $this->sampler($config), $resource);
+            return new TracerProvider(new BudgetedSpanProcessor($processor, $budget), $this->sampler($config), $resource);
         } catch (Throwable $throwable) {
             $diagnostics->exception('Trace provider initialization failed; traces are no-op', $throwable);
 
@@ -148,14 +152,15 @@ final class SdkBuilder
         ObservabilityConfig $config,
         ResourceInfo $resource,
         Diagnostics $diagnostics,
+        ExportBudget $budget,
     ): ?MeterProviderInterface {
         if (!$config->shouldExportMetrics()) {
             return null;
         }
 
         try {
-            $transport = $this->transport($config, 'metrics');
-            $exporter = new MetricExporter($transport, Temporality::DELTA);
+            $transport = $this->transport($config, 'metrics', $budget);
+            $exporter = new DeadlineMetricExporter(new MetricExporter($transport, Temporality::DELTA), $budget);
             $reader = new ExportingReader($exporter);
 
             return MeterProvider::builder()->setResource($resource)->addReader($reader)->build();
@@ -170,14 +175,15 @@ final class SdkBuilder
         ObservabilityConfig $config,
         ResourceInfo $resource,
         Diagnostics $diagnostics,
+        ExportBudget $budget,
     ): ?LoggerProviderInterface {
         if (!$config->shouldExportLogs()) {
             return null;
         }
 
         try {
-            $transport = $this->transport($config, 'logs');
-            $exporter = new LogsExporter($transport);
+            $transport = $this->transport($config, 'logs', $budget);
+            $exporter = new DeadlineExporter(new LogsExporter($transport), $budget);
             $processor = new BatchLogRecordProcessor(
                 $exporter,
                 Clock::getDefault(),
@@ -189,7 +195,7 @@ final class SdkBuilder
                 null,
             );
 
-            return LoggerProvider::builder()->setResource($resource)->addLogRecordProcessor($processor)->build();
+            return LoggerProvider::builder()->setResource($resource)->addLogRecordProcessor(new BudgetedLogProcessor($processor, $budget))->build();
         } catch (Throwable $throwable) {
             $diagnostics->exception('Logger provider initialization failed; OTLP logs are no-op', $throwable);
 
@@ -227,7 +233,7 @@ final class SdkBuilder
         return min(1.0, max(0.0, $value));
     }
 
-    private function transport(ObservabilityConfig $config, string $signal): mixed
+    private function transport(ObservabilityConfig $config, string $signal, ExportBudget $budget): mixed
     {
         $protocol = $config->signalProtocol($signal);
         if ($protocol === 'grpc') {
@@ -238,19 +244,11 @@ final class SdkBuilder
         if (!in_array($scheme, ['http', 'https'], true)) {
             throw new \RuntimeException('OTLP endpoint must use HTTP or HTTPS.');
         }
-        $timeout = $config->timeoutMillis / 1000;
-        $factory = new Psr17Factory();
-        $client = new Psr18Client(HttpClient::create([
-            'timeout' => $timeout,
-            'max_duration' => $timeout,
-            'max_redirects' => 0,
-        ]), $factory, $factory);
-        $transport = (new PsrTransportFactory($client, $factory, $factory))->create(
+        $transport = new BoundedTransport(
+            $budget,
             $config->signalEndpoint($signal),
             Protocols::contentType($protocol),
             $config->headers,
-            null,
-            $timeout,
             $config->exportRetryDelayMillis,
             $config->exportMaxRetries,
         );

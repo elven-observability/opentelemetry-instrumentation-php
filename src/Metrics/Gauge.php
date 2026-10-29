@@ -13,6 +13,7 @@ final class Gauge
     public function __construct(
         private readonly ?GaugeInterface $gauge,
         private readonly AttributeRedactor $redactor,
+        private readonly string $identity = '',
     ) {
     }
 
@@ -24,7 +25,15 @@ final class Gauge
         }
 
         try {
-            $this->gauge->record($amount, $this->redactor->attributes($attributes, true));
+            if (!is_finite((float) $amount)) {
+                return;
+            }
+            $safe = $this->redactor->attributes($attributes, true);
+            $encoded = json_encode($safe, JSON_INVALID_UTF8_SUBSTITUTE);
+            if ($encoded === false || !$this->redactor->budget()->reserveMetric('gauge:' . $this->identity, $encoded)) {
+                return;
+            }
+            $this->gauge->record($amount, $safe);
         } catch (Throwable) {
         }
     }

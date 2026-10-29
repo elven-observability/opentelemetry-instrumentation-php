@@ -33,13 +33,12 @@ final class SafeTracer
 
         try {
             $span = $this->tracer
-                ->spanBuilder($name)
+                ->spanBuilder(substr($this->redactor->redactString($name), 0, 255))
                 ->setSpanKind($kind)
-                ->setAttributes($this->redactor->attributes($attributes))
                 ->startSpan();
             $scope = Context::getCurrent()->withContextValue($span)->activate();
 
-            return new SafeSpan($span, $scope, $this->redactor, $this->diagnostics);
+            return (new SafeSpan($span, $scope, $this->redactor, $this->diagnostics))->setAttributes($attributes);
         } catch (Throwable $throwable) {
             $this->diagnostics->exception('Span creation failed', $throwable);
 

@@ -10,6 +10,7 @@ use Throwable;
 final class ObservabilityHandle
 {
     private bool $shutdown = false;
+    private bool $flushing = false;
 
     public function __construct(private readonly SdkState $state)
     {
@@ -17,15 +18,25 @@ final class ObservabilityHandle
 
     public function forceFlush(): void
     {
-        foreach ([$this->state->tracerProvider, $this->state->meterProvider, $this->state->loggerProvider] as $provider) {
-            if ($provider === null) {
-                continue;
+        if ($this->flushing) {
+            return;
+        }
+        $this->flushing = true;
+        $owner = $this->state->redactor->budget()->enter();
+        try {
+            foreach ([$this->state->tracerProvider, $this->state->meterProvider, $this->state->loggerProvider] as $provider) {
+                if ($provider === null) {
+                    continue;
+                }
+                try {
+                    $provider->forceFlush();
+                } catch (Throwable $throwable) {
+                    $this->state->diagnostics->exception('Telemetry forceFlush failed', $throwable);
+                }
             }
-            try {
-                $provider->forceFlush();
-            } catch (Throwable $throwable) {
-                $this->state->diagnostics->exception('Telemetry forceFlush failed', $throwable);
-            }
+        } finally {
+            $this->state->redactor->budget()->leave($owner);
+            $this->flushing = false;
         }
     }
 
@@ -35,16 +46,20 @@ final class ObservabilityHandle
             return;
         }
         $this->shutdown = true;
-
-        foreach ([$this->state->tracerProvider, $this->state->meterProvider, $this->state->loggerProvider] as $provider) {
-            if ($provider === null) {
-                continue;
+        $owner = $this->state->redactor->budget()->enter();
+        try {
+            foreach ([$this->state->tracerProvider, $this->state->meterProvider, $this->state->loggerProvider] as $provider) {
+                if ($provider === null) {
+                    continue;
+                }
+                try {
+                    $provider->shutdown();
+                } catch (Throwable $throwable) {
+                    $this->state->diagnostics->exception('Telemetry shutdown failed', $throwable);
+                }
             }
-            try {
-                $provider->shutdown();
-            } catch (Throwable $throwable) {
-                $this->state->diagnostics->exception('Telemetry shutdown failed', $throwable);
-            }
+        } finally {
+            $this->state->redactor->budget()->leave($owner);
         }
     }
 

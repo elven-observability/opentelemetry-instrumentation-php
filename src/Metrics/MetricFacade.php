@@ -26,6 +26,9 @@ final class MetricFacade
 
     public function counter(string $name, ?string $unit = null, ?string $description = null): Counter
     {
+        if (strlen($name) > 255 || strlen($unit ?? '') > 63 || strlen($description ?? '') > 1024) {
+            return new Counter(null, $this->redactor);
+        }
         $key = $name . '|' . $unit;
         if (!isset($this->counters[$key])) {
             if (count($this->counters) >= self::MAX_INSTRUMENTS_PER_KIND) {
@@ -39,7 +42,7 @@ final class MetricFacade
                     $instrument = null;
                 }
             }
-            $this->counters[$key] = new Counter($instrument, $this->redactor);
+            $this->counters[$key] = new Counter($instrument, $this->redactor, $key);
         }
 
         return $this->counters[$key];
@@ -47,6 +50,9 @@ final class MetricFacade
 
     public function histogram(string $name, ?string $unit = null, ?string $description = null): Histogram
     {
+        if (strlen($name) > 255 || strlen($unit ?? '') > 63 || strlen($description ?? '') > 1024) {
+            return new Histogram(null, $this->redactor);
+        }
         $key = $name . '|' . $unit;
         if (!isset($this->histograms[$key])) {
             if (count($this->histograms) >= self::MAX_INSTRUMENTS_PER_KIND) {
@@ -60,7 +66,7 @@ final class MetricFacade
                     $instrument = null;
                 }
             }
-            $this->histograms[$key] = new Histogram($instrument, $this->redactor);
+            $this->histograms[$key] = new Histogram($instrument, $this->redactor, $key);
         }
 
         return $this->histograms[$key];
@@ -68,6 +74,9 @@ final class MetricFacade
 
     public function gauge(string $name, ?string $unit = null, ?string $description = null): Gauge
     {
+        if (strlen($name) > 255 || strlen($unit ?? '') > 63 || strlen($description ?? '') > 1024) {
+            return new Gauge(null, $this->redactor);
+        }
         $key = $name . '|' . $unit;
         if (!isset($this->gauges[$key])) {
             if (count($this->gauges) >= self::MAX_INSTRUMENTS_PER_KIND) {
@@ -81,7 +90,7 @@ final class MetricFacade
                     $instrument = null;
                 }
             }
-            $this->gauges[$key] = new Gauge($instrument, $this->redactor);
+            $this->gauges[$key] = new Gauge($instrument, $this->redactor, $key);
         }
 
         return $this->gauges[$key];

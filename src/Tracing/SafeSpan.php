@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elven\Observability\Php\Tracing;
 
 use Elven\Observability\Php\Core\Diagnostics;
+use Elven\Observability\Php\Export\LimitedJson;
 use Elven\Observability\Php\Privacy\AttributeRedactor;
 use OpenTelemetry\API\Trace\SpanInterface;
 use OpenTelemetry\API\Trace\StatusCode;
@@ -14,6 +15,7 @@ use Throwable;
 final class SafeSpan
 {
     private bool $ended = false;
+    private int $remainingBytes = 61440;
 
     public function __construct(
         private readonly ?SpanInterface $span,
@@ -40,7 +42,16 @@ final class SafeSpan
         }
 
         try {
-            $this->span->setAttribute($key, $this->redactor->value($key, $value));
+            if (strlen($key) > 255) {
+                return $this;
+            }
+            $safe = $this->redactor->value($key, $value);
+            $encoded = LimitedJson::encode([$key => $safe], $this->remainingBytes);
+            if ($encoded === null) {
+                return $this;
+            }
+            $this->remainingBytes -= strlen($encoded);
+            $this->span->setAttribute($key, $safe);
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span attribute failed', $throwable);
         }
@@ -66,7 +77,14 @@ final class SafeSpan
         }
 
         try {
-            $this->span->addEvent($name, $this->redactor->attributes($attributes));
+            $name = substr($this->redactor->redactString($name), 0, 255);
+            $safe = $this->redactor->attributes($attributes);
+            $encoded = LimitedJson::encode([$name, $safe], $this->remainingBytes);
+            if ($encoded === null) {
+                return $this;
+            }
+            $this->remainingBytes -= strlen($encoded);
+            $this->span->addEvent($name, $safe);
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span event failed', $throwable);
         }
@@ -82,10 +100,10 @@ final class SafeSpan
         }
 
         try {
-            $this->span->addEvent('exception', $this->redactor->attributes(array_merge($attributes, [
+            $this->addEvent('exception', array_merge($attributes, [
                 'exception.type' => $throwable::class,
                 'exception.message' => $throwable->getMessage(),
-            ])));
+            ]));
         } catch (Throwable $recordFailure) {
             $this->diagnostics?->exception('Span exception recording failed', $recordFailure);
         }
