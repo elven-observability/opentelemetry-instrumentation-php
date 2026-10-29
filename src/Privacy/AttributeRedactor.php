@@ -12,9 +12,6 @@ final class AttributeRedactor
     private const MAX_ATTRIBUTES = 128;
     private const MAX_VALUE_ITEMS = 64;
     private const MAX_DEPTH = 4;
-    private const MAX_METRIC_ATTRIBUTE_SETS = 512;
-    /** @var array<string, true> */
-    private array $metricAttributeSets = [];
     private ExportBudget $budget;
     private const SENSITIVE_KEY_PATTERN = '/authorization|cookie|set-cookie|x-api-key|api[_-]?key|token|password|passwd|pwd|secret|bearer|session|csrf|jwt/i';
     private const JWT_PATTERN = '/\beyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\b/';
@@ -24,12 +21,17 @@ final class AttributeRedactor
 
     public function __construct(private readonly ObservabilityConfig $config)
     {
-        $this->budget = new ExportBudget($config->timeoutMillis);
+        $this->budget = new ExportBudget($config->timeoutMillis, ExportBudget::QUEUE_BYTES, $config->metricCardinalityLimit);
     }
 
     public function budget(): ExportBudget
     {
         return $this->budget;
+    }
+
+    public function instrumentLimit(): int
+    {
+        return $this->config->maxMetricInstrumentsPerKind;
     }
 
     /**
@@ -62,14 +64,6 @@ final class AttributeRedactor
 
         if ($forMetric) {
             ksort($out);
-            $encoded = json_encode($out, JSON_INVALID_UTF8_SUBSTITUTE);
-            $fingerprint = hash('sha256', $encoded === false ? '' : $encoded);
-            if (!isset($this->metricAttributeSets[$fingerprint])) {
-                if (count($this->metricAttributeSets) >= self::MAX_METRIC_ATTRIBUTE_SETS) {
-                    return ['otel.metric.overflow' => true];
-                }
-                $this->metricAttributeSets[$fingerprint] = true;
-            }
         }
 
         return $out;
@@ -78,7 +72,7 @@ final class AttributeRedactor
     public function value(string $key, mixed $value): mixed
     {
         $remaining = self::MAX_VALUE_ITEMS;
-        $bytes = min(8192, $this->config->maxAttributeLength);
+        $bytes = min(ExportBudget::RECORD_BYTES - 1024, $this->config->maxAttributeLength);
         return $this->boundedValue($key, $value, 0, $remaining, $bytes);
     }
 
@@ -92,7 +86,7 @@ final class AttributeRedactor
         }
 
         if (is_string($value)) {
-            $value = substr($this->truncateString($value), 0, max(0, $bytes));
+            $value = substr($value, 0, max(0, $bytes));
             $bytes -= strlen($value);
 
             return $raw ? $value : $this->redactString($value);
@@ -120,6 +114,7 @@ final class AttributeRedactor
 
     public function redactString(string $value): string
     {
+        $value = substr($value, 0, ExportBudget::RECORD_BYTES - 1024);
         if (!$this->config->redactionEnabled) {
             return $this->truncateString($value);
         }

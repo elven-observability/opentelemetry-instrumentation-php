@@ -19,7 +19,11 @@ final class BudgetedLogProcessor implements LogRecordProcessorInterface
 
     public function onEmit(ReadWriteLogRecord $record, ?ContextInterface $context = null): void
     {
-        $encoded = LimitedJson::encode([$record->getBody(), $record->getAttributes()->toArray()], ExportBudget::RECORD_BYTES);
+        $scope = $record->getInstrumentationScope();
+        $encoded = LimitedJson::encode([$record->getBody(), $record->getAttributes()->toArray(),
+            $record->getSeverityText(), $record->getResource()->getAttributes()->toArray(), $record->getResource()->getSchemaUrl(),
+            $scope->getName(), $scope->getVersion(), $scope->getSchemaUrl(), $scope->getAttributes()->toArray(),
+            $record->getEventName()], ExportBudget::RECORD_BYTES);
         if ($encoded === null || !$this->budget->reserve(strlen($encoded) + 1024)) {
             return;
         }

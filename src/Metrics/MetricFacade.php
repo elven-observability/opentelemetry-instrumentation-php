@@ -10,7 +10,6 @@ use Throwable;
 
 final class MetricFacade
 {
-    private const MAX_INSTRUMENTS_PER_KIND = 256;
     /** @var array<string, Counter> */
     private array $counters = [];
     /** @var array<string, Histogram> */
@@ -31,7 +30,7 @@ final class MetricFacade
         }
         $key = $name . '|' . $unit;
         if (!isset($this->counters[$key])) {
-            if (count($this->counters) >= self::MAX_INSTRUMENTS_PER_KIND) {
+            if (count($this->counters) >= $this->redactor->instrumentLimit()) {
                 return new Counter(null, $this->redactor);
             }
             $instrument = null;
@@ -55,7 +54,7 @@ final class MetricFacade
         }
         $key = $name . '|' . $unit;
         if (!isset($this->histograms[$key])) {
-            if (count($this->histograms) >= self::MAX_INSTRUMENTS_PER_KIND) {
+            if (count($this->histograms) >= $this->redactor->instrumentLimit()) {
                 return new Histogram(null, $this->redactor);
             }
             $instrument = null;
@@ -79,7 +78,7 @@ final class MetricFacade
         }
         $key = $name . '|' . $unit;
         if (!isset($this->gauges[$key])) {
-            if (count($this->gauges) >= self::MAX_INSTRUMENTS_PER_KIND) {
+            if (count($this->gauges) >= $this->redactor->instrumentLimit()) {
                 return new Gauge(null, $this->redactor);
             }
             $instrument = null;

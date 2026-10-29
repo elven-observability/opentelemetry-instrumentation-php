@@ -16,6 +16,8 @@ final class SafeSpan
 {
     private bool $ended = false;
     private int $remainingBytes = 61440;
+    /** @var array<string, int> */
+    private array $attributeBytes = [];
 
     public function __construct(
         private readonly ?SpanInterface $span,
@@ -37,7 +39,7 @@ final class SafeSpan
 
     public function setAttribute(string $key, mixed $value): self
     {
-        if ($this->span === null || $this->redactor === null) {
+        if ($this->ended || $this->span === null || $this->redactor === null) {
             return $this;
         }
 
@@ -46,11 +48,13 @@ final class SafeSpan
                 return $this;
             }
             $safe = $this->redactor->value($key, $value);
-            $encoded = LimitedJson::encode([$key => $safe], $this->remainingBytes);
+            $previous = $this->attributeBytes[$key] ?? 0;
+            $encoded = LimitedJson::encode([$key => $safe], $this->remainingBytes + $previous);
             if ($encoded === null) {
                 return $this;
             }
-            $this->remainingBytes -= strlen($encoded);
+            $this->remainingBytes += $previous - strlen($encoded);
+            $this->attributeBytes[$key] = strlen($encoded);
             $this->span->setAttribute($key, $safe);
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span attribute failed', $throwable);

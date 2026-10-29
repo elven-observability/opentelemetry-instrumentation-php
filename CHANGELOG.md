@@ -2,7 +2,9 @@
 
 ## 0.1.1 - Unreleased Candidate
 
-- Bound flush/shutdown I/O with one shared deadline, at most three retries and capped Retry-After waits.
+- Bound flush/shutdown transfer I/O with one shared deadline and at most three retries; defer rather than shorten collector Retry-After backpressure.
+- Restore compatible DNS, endpoint Basic auth and CLI proxy egress; strict resolver refusal is explicit opt-in. Synchronous OS DNS is outside a hard deadline in the default profile. TLS/redirect protections remain enabled.
+- Fix SDK link/resource/scope byte accounting, real per-instrument metric overflow across DELTA exports, valid repeated headers and retained-size accounting on attribute replacement. Add independent-review regressions.
 - Bound queue/metric-series admission, serialized payload acceptance and HTTP headers/responses; preserve TLS verification and refuse redirects.
 - Fix circuit-future accounting, exception/URL privacy, recursive values and emergency disable precedence without replacing the application log writer.
 - Add stalled/drip/oversized/TLS collectors and byte-budget tests. VCS is the verified distribution method; v0.1.1 awaits parent approval/publication.

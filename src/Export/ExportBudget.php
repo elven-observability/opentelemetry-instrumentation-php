@@ -15,10 +15,10 @@ final class ExportBudget
     private int $queuedBytes = 0;
     private int $timeoutMillis;
     private int $queueLimit;
-    /** @var array<string, true> */
+    /** @var array<string, array<string, true>> */
     private $metricSeries = array();
 
-    public function __construct(int $timeoutMillis = 1000, int $queueLimit = self::QUEUE_BYTES)
+    public function __construct(int $timeoutMillis = 1000, int $queueLimit = self::QUEUE_BYTES, private readonly int $metricLimit = 512)
     {
         $this->timeoutMillis = max(1, min(30000, $timeoutMillis));
         $this->queueLimit = max(1, min(self::QUEUE_BYTES, $queueLimit));
@@ -85,16 +85,34 @@ final class ExportBudget
         return $this->queuedBytes;
     }
 
-    public function reserveMetric(string $identity, string $attributes): bool
+    /** @param array<string, mixed> $attributes
+     * @return array<string, mixed>|null
+     */
+    public function metricAttributes(string $identity, array $attributes): ?array
     {
-        $key = hash('sha256', $identity . ':' . $attributes);
-        if (isset($this->metricSeries[$key])) {
-            return true;
+        $encoded = LimitedJson::encode($attributes, self::RECORD_BYTES);
+        if ($encoded === null) {
+            return null;
         }
-        if (count($this->metricSeries) >= 512 || !$this->reserve(strlen($attributes) + strlen($identity) + 1024)) {
-            return false;
+        if (!isset($this->metricSeries[$identity])) {
+            // Reserve a real overflow stream before admitting normal series, so
+            // saturation never consumes its only remaining slot/bytes.
+            if (!$this->reserve(strlen($identity) + 1152)) {
+                return null;
+            }
+            $this->metricSeries[$identity] = [];
         }
-        $this->metricSeries[$key] = true;
-        return true;
+        $key = hash('sha256', $encoded);
+        if (isset($this->metricSeries[$identity][$key])) {
+            return $attributes;
+        }
+        if (
+            count($this->metricSeries[$identity]) >= max(1, $this->metricLimit)
+            || !$this->reserve(strlen($encoded) + 1024)
+        ) {
+            return ['otel.metric.overflow' => true];
+        }
+        $this->metricSeries[$identity][$key] = true;
+        return $attributes;
     }
 }

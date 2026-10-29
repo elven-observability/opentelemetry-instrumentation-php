@@ -132,10 +132,10 @@ final class AuditSafetyTest extends TestCase
     {
         $redactor = new AttributeRedactor((new EnvConfigResolver())->resolve());
         for ($i = 0; $i < 512; $i++) {
-            self::assertSame(['operation' => 'value.' . $i], $redactor->attributes(['operation' => 'value.' . $i], true));
+            self::assertSame(['operation' => 'value.' . $i], $redactor->budget()->metricAttributes('counter:test', $redactor->attributes(['operation' => 'value.' . $i], true)));
         }
-        self::assertSame(['otel.metric.overflow' => true], $redactor->attributes(['operation' => 'new.value'], true));
-        self::assertSame(['operation' => 'value.0'], $redactor->attributes(['operation' => 'value.0'], true));
+        self::assertSame(['otel.metric.overflow' => true], $redactor->budget()->metricAttributes('counter:test', $redactor->attributes(['operation' => 'new.value'], true)));
+        self::assertSame(['operation' => 'value.0'], $redactor->budget()->metricAttributes('counter:test', $redactor->attributes(['operation' => 'value.0'], true)));
     }
 
     public function testUrlPrivacyRunsBeforePercentEncoding(): void

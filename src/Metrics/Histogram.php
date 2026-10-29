@@ -29,8 +29,8 @@ final class Histogram
                 return;
             }
             $safe = $this->redactor->attributes($attributes, true);
-            $encoded = json_encode($safe, JSON_INVALID_UTF8_SUBSTITUTE);
-            if ($encoded === false || !$this->redactor->budget()->reserveMetric('histogram:' . $this->identity, $encoded)) {
+            $safe = $this->redactor->budget()->metricAttributes('histogram:' . $this->identity, $safe);
+            if ($safe === null) {
                 return;
             }
             $this->histogram->record($amount, $safe);

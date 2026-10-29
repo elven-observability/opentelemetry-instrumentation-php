@@ -17,6 +17,7 @@ final class BoundedTransport implements TransportInterface
 {
     private bool $closed = false;
     private bool $sending = false;
+    private float $retryAfterUntil = 0;
 
     /** @param array<string, string> $headers */
     public function __construct(
@@ -37,7 +38,7 @@ final class BoundedTransport implements TransportInterface
     /** @return FutureInterface<mixed> */
     public function send(string $payload, ?CancellationInterface $cancellation = null): FutureInterface
     {
-        if ($this->closed || $this->sending) {
+        if ($this->closed || $this->sending || ExportBudget::now() < $this->retryAfterUntil) {
             return new ErrorFuture(new RuntimeException('OTLP transport unavailable'));
         }
         $this->sending = true;
@@ -74,7 +75,13 @@ final class BoundedTransport implements TransportInterface
                 if (isset($result['headers']['retry-after'])) {
                     $retry = $result['headers']['retry-after'];
                     $seconds = ctype_digit($retry) ? (float) $retry : max(0, (strtotime(substr($retry, 0, 128)) ?: time()) - time());
-                    $delay = max($delay, (int) min(100, $seconds * 1000));
+                    // Never retry earlier than the collector requested. Drop rather
+                    // than sleep beyond our local wait/deadline budget.
+                    if ($seconds * 1000 > min(100, $this->budget->remainingMillis())) {
+                        $this->retryAfterUntil = ExportBudget::now() + $seconds;
+                        break;
+                    }
+                    $delay = max($delay, (int) ceil($seconds * 1000));
                 }
                 if ($this->budget->remainingMillis() <= $delay) {
                     break;

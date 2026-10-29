@@ -29,12 +29,22 @@ final class BudgetedSpanProcessor implements SpanProcessorInterface
             return;
         }
         $data = $span->toSpanData();
+        if (count($data->getEvents()) > 128 || count($data->getLinks()) > 128) {
+            return;
+        }
         $events = [];
         foreach ($data->getEvents() as $event) {
             $events[] = [$event->getName(), $event->getAttributes()->toArray()];
         }
+        $links = [];
+        foreach ($data->getLinks() as $link) {
+            $links[] = [$link->getAttributes()->toArray(), $link->getSpanContext()->getTraceState()?->toString()];
+        }
+        $scope = $data->getInstrumentationScope();
         $encoded = LimitedJson::encode([$data->getName(), $data->getAttributes()->toArray(),
-            $data->getStatus()->getDescription(), $events], ExportBudget::RECORD_BYTES);
+            $data->getStatus()->getDescription(), $events, $links,
+            $data->getResource()->getAttributes()->toArray(), $data->getResource()->getSchemaUrl(),
+            $scope->getName(), $scope->getVersion(), $scope->getSchemaUrl(), $scope->getAttributes()->toArray()], ExportBudget::RECORD_BYTES);
         if ($encoded === null || !$this->budget->reserve(strlen($encoded) + 1024)) {
             return;
         }

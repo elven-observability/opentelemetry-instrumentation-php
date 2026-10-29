@@ -29,8 +29,8 @@ final class Gauge
                 return;
             }
             $safe = $this->redactor->attributes($attributes, true);
-            $encoded = json_encode($safe, JSON_INVALID_UTF8_SUBSTITUTE);
-            if ($encoded === false || !$this->redactor->budget()->reserveMetric('gauge:' . $this->identity, $encoded)) {
+            $safe = $this->redactor->budget()->metricAttributes('gauge:' . $this->identity, $safe);
+            if ($safe === null) {
                 return;
             }
             $this->gauge->record($amount, $safe);

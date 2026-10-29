@@ -29,8 +29,8 @@ final class Counter
                 return;
             }
             $safe = $this->redactor->attributes($attributes, true);
-            $encoded = json_encode($safe, JSON_INVALID_UTF8_SUBSTITUTE);
-            if ($encoded === false || !$this->redactor->budget()->reserveMetric('counter:' . $this->identity, $encoded)) {
+            $safe = $this->redactor->budget()->metricAttributes('counter:' . $this->identity, $safe);
+            if ($safe === null) {
                 return;
             }
             $this->counter->add($amount, $safe);

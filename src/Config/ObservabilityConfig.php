@@ -58,6 +58,8 @@ final class ObservabilityConfig
         public readonly int $maxAttributeLength,
         public readonly bool $workerResetStrict,
         public readonly bool $logCorrelationEnabled,
+        public readonly int $metricCardinalityLimit = 512,
+        public readonly int $maxMetricInstrumentsPerKind = 256,
     ) {
     }
 
