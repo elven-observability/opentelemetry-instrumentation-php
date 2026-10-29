@@ -10,6 +10,9 @@ final class EnvConfigResolver
     public function resolve(array $config = []): ObservabilityConfig
     {
         $enabled = $this->bool($config, 'enabled', 'ELVEN_OTEL_ENABLED', false);
+        if ($this->env('ELVEN_OTEL_ENABLED') !== null && !$this->envBool('ELVEN_OTEL_ENABLED', false)) {
+            $enabled = false;
+        }
         if ($this->envBool('OTEL_SDK_DISABLED', false)) {
             $enabled = false;
         }

@@ -12,16 +12,16 @@ use Elven\Observability\Php\Metrics\MetricFacade;
 use Elven\Observability\Php\Privacy\AttributeRedactor;
 use Elven\Observability\Php\Propagation\CompositePropagator;
 use Elven\Observability\Php\Tracing\SafeTracer;
-use OpenTelemetry\API\Behavior\Internal\Logging;
 use OpenTelemetry\API\Baggage\Propagation\BaggagePropagator;
 use OpenTelemetry\API\Common\Time\Clock;
 use OpenTelemetry\API\Trace\Propagation\TraceContextPropagator;
 use OpenTelemetry\Contrib\Otlp\LogsExporter;
 use OpenTelemetry\Contrib\Otlp\MetricExporter;
-use OpenTelemetry\Contrib\Otlp\OtlpHttpTransportFactory;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use OpenTelemetry\Contrib\Otlp\Protocols;
 use OpenTelemetry\Contrib\Otlp\SpanExporter;
 use OpenTelemetry\SDK\Common\Attribute\Attributes;
+use OpenTelemetry\SDK\Common\Export\Http\PsrTransportFactory;
 use OpenTelemetry\SDK\Logs\LoggerProvider;
 use OpenTelemetry\SDK\Logs\LoggerProviderInterface;
 use OpenTelemetry\SDK\Logs\Processor\BatchLogRecordProcessor;
@@ -39,6 +39,8 @@ use OpenTelemetry\SDK\Trace\SpanProcessor\BatchSpanProcessor;
 use OpenTelemetry\SDK\Trace\TracerProvider;
 use OpenTelemetry\SDK\Trace\TracerProviderInterface;
 use Throwable;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\Psr18Client;
 
 final class SdkBuilder
 {
@@ -47,13 +49,6 @@ final class SdkBuilder
         $diagnostics = new Diagnostics($config->debug);
         $redactor = new AttributeRedactor($config);
         $propagator = new CompositePropagator($this->propagators($config), $diagnostics);
-        if (!$config->debug) {
-            try {
-                Logging::disable();
-            } catch (Throwable) {
-            }
-        }
-
         if (!$config->enabled) {
             $diagnostics->debug('Observability disabled by configuration');
 
@@ -239,12 +234,23 @@ final class SdkBuilder
             throw new \RuntimeException('OTLP gRPC transport is not bundled; use http/protobuf or install a dedicated gRPC transport.');
         }
 
-        $transport = (new OtlpHttpTransportFactory())->create(
+        $scheme = strtolower((string) parse_url($config->signalEndpoint($signal), PHP_URL_SCHEME));
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            throw new \RuntimeException('OTLP endpoint must use HTTP or HTTPS.');
+        }
+        $timeout = $config->timeoutMillis / 1000;
+        $factory = new Psr17Factory();
+        $client = new Psr18Client(HttpClient::create([
+            'timeout' => $timeout,
+            'max_duration' => $timeout,
+            'max_redirects' => 0,
+        ]), $factory, $factory);
+        $transport = (new PsrTransportFactory($client, $factory, $factory))->create(
             $config->signalEndpoint($signal),
             Protocols::contentType($protocol),
             $config->headers,
-            'none',
-            $config->timeoutMillis / 1000,
+            null,
+            $timeout,
             $config->exportRetryDelayMillis,
             $config->exportMaxRetries,
         );

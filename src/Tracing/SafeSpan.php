@@ -82,7 +82,10 @@ final class SafeSpan
         }
 
         try {
-            $this->span->recordException($throwable, $this->redactor->attributes($attributes));
+            $this->span->addEvent('exception', $this->redactor->attributes(array_merge($attributes, [
+                'exception.type' => $throwable::class,
+                'exception.message' => $throwable->getMessage(),
+            ])));
         } catch (Throwable $recordFailure) {
             $this->diagnostics?->exception('Span exception recording failed', $recordFailure);
         }
@@ -97,7 +100,7 @@ final class SafeSpan
         }
 
         try {
-            $this->span->setStatus($code, $description);
+            $this->span->setStatus($code, $description === null ? null : $this->redactor?->redactString($description));
         } catch (Throwable $throwable) {
             $this->diagnostics?->exception('Span status failed', $throwable);
         }

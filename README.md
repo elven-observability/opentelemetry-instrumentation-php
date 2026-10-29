@@ -2,6 +2,9 @@
 
 Modern, fail-open observability for PHP 8.2+ applications.
 
+Authoritative documentation: [docs.elven.works](https://docs.elven.works/).
+Documentation source and corrections: [elvenworks-ps/docs.elven.works](https://github.com/elvenworks-ps/docs.elven.works).
+
 This package provides a clean Elven layer on top of the official OpenTelemetry PHP SDK:
 
 - traces, metrics and OTLP logs;
@@ -34,6 +37,13 @@ PHP 8.0 and 8.1 are intentionally not supported because they are end-of-life in 
 
 ```bash
 composer require elven-observability/opentelemetry-instrumentation-php
+```
+
+If the package is not available in your Composer registry, configure the source repository first:
+
+```bash
+composer config repositories.elven-php vcs https://github.com/elven-observability/opentelemetry-instrumentation-php
+composer require elven-observability/opentelemetry-instrumentation-php:^0.1
 ```
 
 The package is safe by default: installing it does not export telemetry until `ELVEN_OTEL_ENABLED=true`
@@ -124,6 +134,8 @@ The provider automatically:
 - prepends HTTP middleware;
 - adds queue job spans;
 - adds Monolog trace correlation when possible.
+
+Database, cache and event helpers require explicit calls; the provider does not automatically hook those framework events.
 
 Manual business metric:
 
@@ -311,6 +323,14 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:43189
 - Do not put high-cardinality values in metric labels.
 - Do not use request IDs, trace IDs, user IDs, order IDs, emails, CPF, tokens or raw paths as metric labels.
 - In worker mode, always call lifecycle reset/flush hooks.
+- Export is synchronous during flush/shutdown. A timeout applies per transport attempt, not to the entire request. Prefer a local collector and keep retries at their default of zero.
+- The modern circuit breaker is per transport instance, not shared across PHP-FPM requests or signals.
+- The exporter uses a dedicated Symfony HTTP client with redirects disabled and a total duration limit per attempt; it does not reuse application HTTP handlers.
+- Internal OpenTelemetry logging remains application-owned (`OTEL_LOG_LEVEL`); bootstrap does not replace the process-wide log writer.
+- Instrument caches accept at most 256 names per kind per SDK lifetime; further names are no-op. Use static names, not identifiers.
+- At most 512 sanitized metric attribute combinations are retained per SDK lifetime, shared by instruments. Further combinations aggregate with `otel.metric.overflow=true`; existing combinations continue normally. This bounds retained cardinality, not total series across restarts.
+- Attributes are limited to 128 entries per call; nested values have a depth limit of 4 and a 64-node traversal budget. Exception events omit raw stack traces.
+- Do not install both manual middleware and upstream auto-instrumentation for the same operation without checking for duplicate spans.
 
 ## What This Package Does Not Promise
 
@@ -318,3 +338,4 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:43189
 - It does not support PHP 8.0/8.1.
 - It does not mutate tenant identity into resource attributes per request.
 - It does not capture bodies/payloads by default.
+- Laravel has a provider, HTTP middleware and queue listeners; DB/cache/event helpers are manual, not automatic framework hooks. Slim/Mezzio support is PSR-15 middleware, not a version-tested native adapter. Framework and worker acceptance must be tested in the target application.
