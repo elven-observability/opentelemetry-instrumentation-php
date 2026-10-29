@@ -37,12 +37,12 @@ PHP 8.0 and 8.1 are outside this package's supported matrix. This is the Elven p
 
 The verified distribution method is an explicit Git/VCS repository. Public Packagist lookup returned HTTP 404 on 2026-10-29; this is not a target-network diagnosis and no Packagist token is required to consume Git tags.
 
-Installation from Git tag `v0.1.0` was verified, but that baseline contains the audit findings. The next candidate is `0.1.1` / `v0.1.1`, **not published by this audit**. Use only the immutable tag approved and published by the parent after independent review. The following commands are for that approved release, not a claim that its tag already exists:
+Installation from Git tag `v0.1.0` was verified, but that baseline contains the audit findings. The next candidate is the optional `0.2.0-rc.1` / `v0.2.0-rc.1`, **not published yet**. This is not the previously planned transparent `0.1.1` patch. Existing stable `^0.1` constraints do not select this new minor RC. Review [MIGRATION.md](MIGRATION.md) before opting in. The following commands are conditional on the reviewed immutable tag existing:
 
 ```bash
 composer config repositories.elven-php git https://github.com/elven-observability/opentelemetry-instrumentation-php
-# Only after the parent approves and publishes the immutable v0.1.1 tag:
-composer require elven-observability/opentelemetry-instrumentation-php:0.1.1
+# Only after the reviewed immutable v0.2.0-rc.1 tag is published:
+composer require elven-observability/opentelemetry-instrumentation-php:0.2.0-rc.1
 ```
 
 The package is safe by default: installing it does not export telemetry until `ELVEN_OTEL_ENABLED=true`
@@ -324,7 +324,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:43189
 - In worker mode, always call lifecycle reset/flush hooks.
 - Export is synchronous. The configured export timeout (clamped to 1-30000ms) is shared by all signals and retries in a flush/shutdown, not restarted per attempt. Checks are cooperative around bounded serialization and I/O; this is not a hard real-time CPU/RSS guarantee.
 - The modern circuit breaker is per transport instance, not shared across PHP-FPM requests or signals.
-- The exporter uses a dedicated HTTP transport, never application HTTP handlers. Retries are capped at three and local waits at 100ms and the remaining shared deadline. A longer `Retry-After` defers that transport instead of retrying early or sleeping beyond the deadline. Redirects stay disabled and TLS verification stays enabled.
+- The exporter uses a dedicated HTTP transport, never application HTTP handlers. Application PSR discovery, custom handlers and client-specific mTLS/compression/proxy settings are not inherited: this is an explicit migration boundary, not feature-equivalent PSR transport replacement. Retries are capped at three and local waits at 100ms and the remaining shared deadline. A longer `Retry-After` defers that transport instead of retrying early or sleeping beyond the deadline. Redirects stay disabled and TLS verification stays enabled.
 - Queued trace/log data and retained metric series share an 8MiB logical-data budget, with 64KiB per trace/log record, including SDK links/resource/scope data. Records exceeding admission limits are dropped. This accounting is not process RSS; direct SDK metadata is accounted, not a promise of automatic PII sanitization outside the safe facade.
 - Serialized payload acceptance/transmission is capped at 4MiB per flush in total, including retry attempts. The official SDK serializer has bounded queue input; an oversized encoded batch is rejected before network I/O. Responses are capped at 16KiB headers and 64KiB body; later batches are skipped after the shared deadline. These are logical admission/transport limits, not an exact allocator ceiling.
 - The default compatibility profile accepts OS-resolved collector hostnames, endpoint Basic-auth userinfo and explicit headers. CLI `HTTP_PROXY` is honored, while CGI/FPM's uppercase `HTTP_PROXY` is ignored against httpoxy; lowercase configured proxies and `NO_PROXY` remain supported. Streams support HTTP proxies, including HTTPS CONNECT; other proxy profiles require cURL and fail telemetry rather than bypassing required egress.
