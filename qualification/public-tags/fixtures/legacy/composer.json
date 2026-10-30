@@ -1,0 +1,6 @@
+{
+  "name": "audit/legacy-public-optional-rc-tag",
+  "repositories": [{"type": "git", "url": "https://github.com/elven-observability/opentelemetry-instrumentation-php-legacy"}],
+  "require": {"elven-observability/opentelemetry-instrumentation-php-legacy": "0.8.0-rc.1"},
+  "config": {"platform": {"php": "7.3.13"}, "allow-plugins": false}
+}
