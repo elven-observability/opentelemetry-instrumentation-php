@@ -24,6 +24,12 @@ This package provides a clean Elven layer on top of the official OpenTelemetry P
 - An OTLP collector reachable over HTTP
 - Recommended in production: `ext-protobuf`
 
+### Runtime Security
+
+The PHP version range above describes API compatibility, not a secure patch level. Before production adoption, use PHP 8.2.35, 8.3.36, 8.4.27, 8.5.12 or a later patched release in the corresponding branch, or verify an equivalent vendor backport. The PHP project's [October 2026 security notice](https://www.php.net/index.php) identifies critical runtime RCE vulnerabilities CVE-2026-109618 and CVE-2026-109619. Updating or disabling this Elven library does not patch PHP.
+
+Also review the notice's remaining conditional session-upload issue, CVE-2026-115560, and Windows rebuilt packages for Brotli CVE-2026-111497 where applicable. The library does not change PHP memory/session settings to mitigate these issues. The original PHP 8.5.10 CLI consumer receipt is compatibility and signal-delivery evidence, not secure web-runtime qualification; any newer runtime results are separate addenda. `composer audit` does not certify the PHP engine or its native dependencies.
+
 Supported test matrix:
 
 - PHP 8.2
