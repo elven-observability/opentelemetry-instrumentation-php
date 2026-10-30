@@ -1,0 +1,513 @@
+{
+  "schema": 1,
+  "distribution": "Exact public Git/VCS prerelease tags, not Packagist",
+  "php_version": "8.5.12",
+  "node_version": "26.13.0",
+  "composer_version": "2.11.0",
+  "source_base": "cd3728764b1ccd883a0b2ccf72a846baf73dca76",
+  "consumer_sha256": "1d0cb90d38e49c37f39e4bb9c810ef042bc048d24d3ae46e35f06247a909f49e",
+  "profiles": [
+    {
+      "kind": "modern",
+      "head": "4b583db8aecc741e2553820c814ac83deeb4690c",
+      "tag": "v0.2.0-rc.1",
+      "version": "0.2.0-rc.1",
+      "package": "elven-observability/opentelemetry-instrumentation-php",
+      "checked_files": [
+        {
+          "file": "CHANGELOG.md",
+          "sha256": "6feef54570aaeb75152f990e73efdd6ece3f74fa477c8ee2b6dba49386432daa"
+        },
+        {
+          "file": "MIGRATION.md",
+          "sha256": "e1e6e30370b7a55c444194568537e493c86659f610dd0afb79c496d2d9d26c03"
+        },
+        {
+          "file": "README.md",
+          "sha256": "d1ef07246663a55b55f1ef16054a93c4d251f19e67aa553693b1c1350ecaf700"
+        },
+        {
+          "file": "composer.json",
+          "sha256": "53726d7555398b38759fbf28462c29fab0d37b18151694f41f6a753149b66bca"
+        },
+        {
+          "file": "src/Config/EnvConfigResolver.php",
+          "sha256": "76fd15bd69888a0226260fd4e633af3588998848369336b9bf5e85d6ebcc1cf2"
+        },
+        {
+          "file": "src/Config/ObservabilityConfig.php",
+          "sha256": "5a1b7cfd1b1aa29149d0df14034869347f7f35d09c297905afb3b97ed9f405b7"
+        },
+        {
+          "file": "src/Core/Diagnostics.php",
+          "sha256": "e319c5767386d374e594d2cb2a83fdfd4b63f12cde08514259dd0f821053ed30"
+        },
+        {
+          "file": "src/Export/BoundedHttpExchange.php",
+          "sha256": "b4d62bfcc8000384e306ae908467b12a37c5df49f2d669d5b6f20455dd768af3"
+        },
+        {
+          "file": "src/Export/BoundedTransport.php",
+          "sha256": "7b261f4d1d6eec9c0f9f1068eb60eb359b5fe7dc5ebc5dc219473f37de8ed39c"
+        },
+        {
+          "file": "src/Export/BudgetedLogProcessor.php",
+          "sha256": "9551e3f6b4c777a78e0fc3beedd25957bce8be322978bab3c3a1b4d522a7489e"
+        },
+        {
+          "file": "src/Export/BudgetedSpanProcessor.php",
+          "sha256": "a45a053a32ffe9925eede4744e7ccac7e7053190355d024e1a0427c9efb05c4a"
+        },
+        {
+          "file": "src/Export/CircuitBreakerFuture.php",
+          "sha256": "81a5b62b6245643050233a2f4b0404ae311ff64fa7a8023da2b8884e4a67276c"
+        },
+        {
+          "file": "src/Export/CircuitBreakerTransport.php",
+          "sha256": "0fee28eed6f1dc3eebdb61c3261f313807ef25d898e817954108d55848148407"
+        },
+        {
+          "file": "src/Export/DeadlineExporter.php",
+          "sha256": "387bf83c3672c553bf0dea11e226a9ee5e1d0c5e851086823816111df594e668"
+        },
+        {
+          "file": "src/Export/DeadlineMetricExporter.php",
+          "sha256": "9331c876b43f76efc89c51afd1bf4d5852b7fe18646d02a14f239c9802ea4b22"
+        },
+        {
+          "file": "src/Export/ExportBudget.php",
+          "sha256": "1eb5c9eb287d2b97c6ccd9b7497b49fba15367f11db56e0e62155ced4f86ad73"
+        },
+        {
+          "file": "src/Export/LimitedJson.php",
+          "sha256": "ac13076c8b51f69c5e3b3ab7cd921af8feadfe6fb584b06a30d42d8ebaa4b77f"
+        },
+        {
+          "file": "src/Instrumentation/CacheInstrumentation.php",
+          "sha256": "b2d05e17d2e7323364482e54b1ff4affa527bd04a58f84ff27d51f70e52e0d1e"
+        },
+        {
+          "file": "src/Instrumentation/DbInstrumentation.php",
+          "sha256": "e85ed7bd764ba0610d9e1b884fb53a1b663d75b3e1bfe3249f0d91a2261aa4c0"
+        },
+        {
+          "file": "src/Instrumentation/DependencyInstrumentation.php",
+          "sha256": "7d6217a7525a3963e7996a2e84c01d2f9c495787df366a08cbd5b19434791307"
+        },
+        {
+          "file": "src/Instrumentation/HttpClientInstrumentation.php",
+          "sha256": "2f604763e04867d4566e638745b56d64582cf8c86e05162fe121177022d7382b"
+        },
+        {
+          "file": "src/Instrumentation/HttpServerInstrumentation.php",
+          "sha256": "6c1e635c21b9a596a79570341dc90115f76d9f975bd8d2415c325dde0bb56dd1"
+        },
+        {
+          "file": "src/Instrumentation/JobInstrumentation.php",
+          "sha256": "afb9a2c21cd5debdac78c3aeba24af96f4375b493130992c7fa1ef73a5c516b4"
+        },
+        {
+          "file": "src/Integrations/FrankenPhp/WorkerLifecycle.php",
+          "sha256": "43f5850de6fae285ec6572a790768d3dc22ccb5595dd2bb329eee79d429d7d71"
+        },
+        {
+          "file": "src/Integrations/Guzzle/GuzzleMiddleware.php",
+          "sha256": "3c96ff49f9a505bc5067de86ea1b7589ecad4e0198df81674adb87801300b075"
+        },
+        {
+          "file": "src/Integrations/Laravel/ElvenObservabilityServiceProvider.php",
+          "sha256": "fc62d206b9f0454f5a45fd68a6171c0a89539fb118d32b787d970986bae3c853"
+        },
+        {
+          "file": "src/Integrations/Laravel/LaravelObservabilityMiddleware.php",
+          "sha256": "2c10a43facb45d37b57c536820ef265206ee5be35cdd4146e9400139fc40fea0"
+        },
+        {
+          "file": "src/Integrations/Laravel/LaravelQueueContext.php",
+          "sha256": "8f464d9c128b4a43af304970f052ad06d0e31b51bca151312c96af9e3dba6d27"
+        },
+        {
+          "file": "src/Integrations/Psr/ObservabilityMiddleware.php",
+          "sha256": "66775645933bbd45f9d8d0387c0f949220a124d35b2b26129ca81e40b4b17b52"
+        },
+        {
+          "file": "src/Integrations/Symfony/HttpKernelSubscriber.php",
+          "sha256": "2f31964170ce740a2cb90f17bc8feef70cd5bc137c28c001bd7345e13d5ee678"
+        },
+        {
+          "file": "src/Logs/LogFacade.php",
+          "sha256": "2de55a72bdc29127bd9d4a5416c52e9613d632308dc0aebc85e4f91cf038fb27"
+        },
+        {
+          "file": "src/Logs/MonologTraceProcessor.php",
+          "sha256": "bfffe809279d651c0201f3e9c5ac286a4fdc8a3e7ba200daa5bf4cba2355e8eb"
+        },
+        {
+          "file": "src/Metrics/Counter.php",
+          "sha256": "fe192fd90e223eb11b31e00f539242906164c4add428bbcd679c6097e9ca6651"
+        },
+        {
+          "file": "src/Metrics/Gauge.php",
+          "sha256": "adcfb7bf7e34765d51985ef88904ef512608e5c361bed29b638269db387a7335"
+        },
+        {
+          "file": "src/Metrics/Histogram.php",
+          "sha256": "66b733c98b73026fafd6df1b988b19d8088550d2da2b906f407705e862737ed4"
+        },
+        {
+          "file": "src/Metrics/MetricFacade.php",
+          "sha256": "95573541aeac4f92d0aa739e5830f4f20e0ddb76385b75aa572c009f7fc8903c"
+        },
+        {
+          "file": "src/Observability.php",
+          "sha256": "5987bdabdee075b7974dd7819d369d77bf7013a500065eb7acf1883f3959d55b"
+        },
+        {
+          "file": "src/ObservabilityHandle.php",
+          "sha256": "077444f1e4ccd56760d4369db786e5ef8d403f0a01602e01cd162ef0c962eb32"
+        },
+        {
+          "file": "src/Privacy/AttributeRedactor.php",
+          "sha256": "b9de6db3eb57570658c6261f0c279a2107a923d54b851ba02f0905c3eaca0a3b"
+        },
+        {
+          "file": "src/Privacy/DbStatementSanitizer.php",
+          "sha256": "3379ea3c8cb075f850c46aed97c2f8557271bc6270c30e206bb98c12e18258fd"
+        },
+        {
+          "file": "src/Privacy/UrlSanitizer.php",
+          "sha256": "2fd4cc79d7343d402be4425c31a63f8439d7c6e48336b9077f9157b69cb0159b"
+        },
+        {
+          "file": "src/Propagation/CompositePropagator.php",
+          "sha256": "4c3ba00a9737bbab39b08bc88c86885d0efad0eb10c5695d2d548bfc182f8f25"
+        },
+        {
+          "file": "src/Propagation/HeaderGetter.php",
+          "sha256": "885548778711c877f70b1979874666a7d4763ff675de44694d5b7a9f7a40b52d"
+        },
+        {
+          "file": "src/Propagation/HeaderSetter.php",
+          "sha256": "6b815d15b74bcf5f72d91e1e049fdf7e2ef120a7fe5b31d8ba705479cd513753"
+        },
+        {
+          "file": "src/Sdk/ObservabilityVersion.php",
+          "sha256": "ee4130c1965bfacde63a44db87e52fcc4f994a758126d04558f130718710e760"
+        },
+        {
+          "file": "src/Sdk/SdkBuilder.php",
+          "sha256": "e9226363b4d9896c38dd0bc30d8dd207634286ee4b4e9e39b012cccca084e35b"
+        },
+        {
+          "file": "src/Sdk/SdkState.php",
+          "sha256": "30eb2f57b5de5d0a2d8ac8b871e378097b3be4ebffa4b212ba6892fa77b196b7"
+        },
+        {
+          "file": "src/Tracing/SafeSpan.php",
+          "sha256": "0d04d20967db03c2b1bf9cb8a78a5026e34706e0440f3c823ec38799c34f52eb"
+        },
+        {
+          "file": "src/Tracing/SafeTracer.php",
+          "sha256": "e4919cbd1738295076c407e0734c1595c7dea2de576745db20c82d39df07d50f"
+        }
+      ],
+      "repository": "https://github.com/elven-observability/opentelemetry-instrumentation-php",
+      "tag_object": "3b3c4e2b99a3e872ab24daaba26acde2b6f4247c",
+      "fixtures_sha256": {
+        "composer.json": "9ab52d1320b40f9c21bdc023f9c8274aadea584d4edba969133159220e128da6",
+        "composer.lock": "5ccd06edbd2eee01ddb3474abcdabc05f34e93bf61add593c3e8d913c022f43e"
+      }
+    },
+    {
+      "kind": "legacy",
+      "head": "8cbdef82827a34bc9e2e059264e9d2ae86dd9b00",
+      "tag": "v0.8.0-rc.1",
+      "version": "0.8.0-rc.1",
+      "package": "elven-observability/opentelemetry-instrumentation-php-legacy",
+      "checked_files": [
+        {
+          "file": "CHANGELOG.md",
+          "sha256": "2b4627bdb620f6a036935333e50780df56b707d5139a80cf16e1b7f382d1c056"
+        },
+        {
+          "file": "MIGRATION.md",
+          "sha256": "093691521c6c090e3fbfa33cbb35c0c0e750d97caad667daf7dc2b17214ae408"
+        },
+        {
+          "file": "README.md",
+          "sha256": "09ae93b32ace42917b96b6c47d473f9d2df98bc0eaec4dbf00c0453d581fbe7b"
+        },
+        {
+          "file": "composer.json",
+          "sha256": "efc5db81e5c0416049dba127153318f96dc44ad41dd7a463e771ad1b446621d3"
+        },
+        {
+          "file": "src/Attribution/TrafficSourceResolver.php",
+          "sha256": "be6bb3f545a3a2721c44b4bdb974ebb0d812dcb4ba974b709563d7da356bf7b7"
+        },
+        {
+          "file": "src/Bridge/Legacy/FrontControllerInstrumentation.php",
+          "sha256": "3eed6f9bb5b7950ded7adde3c49c26006e85c1831d8209d1b698c218504eae63"
+        },
+        {
+          "file": "src/Bridge/Legacy/RestRouteInstrumentation.php",
+          "sha256": "e68bd31d4e8f95df540da0135b2fb7be5d7e8ec58a73ca9404a41e55265c5313"
+        },
+        {
+          "file": "src/Config/EnvConfigResolver.php",
+          "sha256": "5ed1b71cb1fd1b715ca1952f188b61f19a0e51f11ba1d10fee914ae355188be2"
+        },
+        {
+          "file": "src/Config/ObservabilityConfig.php",
+          "sha256": "95ac006107cd3ac89860adfc5ae26dc1e831e9f713aa65edae703935308bdd32"
+        },
+        {
+          "file": "src/Context/ContextFacade.php",
+          "sha256": "eeea01dbbfc090f6cc3cf635abb0395240af870b1856555e505c596dde3c3816"
+        },
+        {
+          "file": "src/Context/RequestContext.php",
+          "sha256": "38a5c3c4de5155383525716a178b40c955d8aab912ace9d8ec0711d214831e10"
+        },
+        {
+          "file": "src/Export/BoundedHttpExchange.php",
+          "sha256": "2f5d3f5d4378b11fca564750bf50132ec9a881e112c56103c3eaae2ac2e0ec92"
+        },
+        {
+          "file": "src/Export/CircuitBreaker.php",
+          "sha256": "e6132bb125239ff71844fdb51ea8282050c37a56fdf3b42581322cd1c5ebc80d"
+        },
+        {
+          "file": "src/Export/ExportBudget.php",
+          "sha256": "9431a163d809bb48cb94f88fe922fed3e2446267c94395d4ab91c5d5f50d1102"
+        },
+        {
+          "file": "src/Export/HttpJsonClient.php",
+          "sha256": "ed08c13c48acccc3b7fef18aa6399b67f507428cf7fe65094d390348b3c9af19"
+        },
+        {
+          "file": "src/Export/LimitedJson.php",
+          "sha256": "87bfa8e07ffa906976f2bb5373e300b8aacfdf4b47ce592d49c2edcf528b0491"
+        },
+        {
+          "file": "src/Export/OtlpHttpJsonLogExporter.php",
+          "sha256": "8039a1526ee8556afabf00f1f3653e806451de77978d210a8c8aca8618d33f4e"
+        },
+        {
+          "file": "src/Export/OtlpHttpJsonMetricExporter.php",
+          "sha256": "c89f7bb208c4673c69f51a98382dd4e6c3dfd588165b2d34f963ec45dc138cb1"
+        },
+        {
+          "file": "src/Export/OtlpHttpJsonTraceExporter.php",
+          "sha256": "d4cbbb7ed30761a48901912e4491554b01b57bff090c26d5820ca5022410d79a"
+        },
+        {
+          "file": "src/Instrumentation/AmqpInstrumentation.php",
+          "sha256": "b54f3f6bda8c397c5ab45e1ff5dd0d5ad37176980530cb777d082440aa1728c0"
+        },
+        {
+          "file": "src/Instrumentation/AwsInstrumentation.php",
+          "sha256": "6a85c42cde497c4297094aa407a754919a76c543f5d0c26f699ce15b3bb43763"
+        },
+        {
+          "file": "src/Instrumentation/BotClassifier.php",
+          "sha256": "0f5a9dc2aef579a597baa14d1e5140e1629cfdfd84dfc01709cc450535bfddfc"
+        },
+        {
+          "file": "src/Instrumentation/CacheInstrumentation.php",
+          "sha256": "6bac8c08de6fd4ab4a165ccfa77812054252dc4c49aedb27fe121c0a7093a3d6"
+        },
+        {
+          "file": "src/Instrumentation/CliInstrumentation.php",
+          "sha256": "c6d3330446371b27fcec6c0a9eae2b0daf96141c540dee63400e097a3379f3f6"
+        },
+        {
+          "file": "src/Instrumentation/CurlInstrumentation.php",
+          "sha256": "a954ced4e7a5fd8dc7c9bad1ad79756ce7d5d56b8c1074853fd6631e7d2f455e"
+        },
+        {
+          "file": "src/Instrumentation/DbInstrumentation.php",
+          "sha256": "5e6bd92dbe759a736fe0095e21bc5b1e37cb98451ace268e682f4035c7d3492c"
+        },
+        {
+          "file": "src/Instrumentation/GuzzleInstrumentation.php",
+          "sha256": "b3efd4c92d5ee430c6bc48136cdefebbdca40f50f0a6c0c4274badf153c95fe6"
+        },
+        {
+          "file": "src/Instrumentation/HeaderInjector.php",
+          "sha256": "6b02b6ed154c64a82649ef626a667efd9465a5809bd7bd559b0c599f3e37b249"
+        },
+        {
+          "file": "src/Instrumentation/HttpClientInstrumentation.php",
+          "sha256": "6a3fa8fd97ce7cd056a95c416d59dd72dfaf0aeaea9579573edd79247fa7815e"
+        },
+        {
+          "file": "src/Instrumentation/HttpServerInstrumentation.php",
+          "sha256": "7656fb50b06161c7f07e19c029e3074fd981fed27e803e552dc25284b126399d"
+        },
+        {
+          "file": "src/Instrumentation/MailInstrumentation.php",
+          "sha256": "a7dc235fa43ca6f1512c09b53ef88788fe7e117754aeb5e9199c8bb3764e6fcf"
+        },
+        {
+          "file": "src/Instrumentation/MemcachedInstrumentation.php",
+          "sha256": "8669d10a4c61c632ea8b92a3f93fc91200e28a0832a21cbfc7ac0ccc47f72e5e"
+        },
+        {
+          "file": "src/Instrumentation/MessagingInstrumentation.php",
+          "sha256": "6d8cde25e16dcbf2fe1ed6cb054d19fec69254b65b17caff74ac99512c5fd930"
+        },
+        {
+          "file": "src/Instrumentation/MongoInstrumentation.php",
+          "sha256": "c42e50710f9a9a8ce6740772f4f65bd881bff9d0cfc4c1c692e073da66c5bc8b"
+        },
+        {
+          "file": "src/Instrumentation/RedisInstrumentation.php",
+          "sha256": "4d7ea5ff114502d0f3e12543e3f39c4db7cc4f89ce73038c9ba8ee23b2cbf2ed"
+        },
+        {
+          "file": "src/Instrumentation/SearchInstrumentation.php",
+          "sha256": "6edf904ff87b7e65c8a2542b0017bded40edcc5d582ed65d425f1d8c81945b65"
+        },
+        {
+          "file": "src/Instrumentation/ServerRequestScope.php",
+          "sha256": "af02005856528cce93bd7c11b5530a0487f5726ca95d830413aab3b1a74b090e"
+        },
+        {
+          "file": "src/Instrumentation/Slim2Instrumentation.php",
+          "sha256": "7388c973ea1b5352030cc5146ce56fd6c7868e4012fd64d4c50ca36ce7869981"
+        },
+        {
+          "file": "src/Instrumentation/SoapInstrumentation.php",
+          "sha256": "b82251c8ec6fa7058049c6288ef3d40555c3a566c9300f0b4891fa1cfcf8cb4d"
+        },
+        {
+          "file": "src/Logs/LogsFacade.php",
+          "sha256": "3110859417a8570e45e6c95855cb72e17788005c89bca72a97fc743be10ef86a"
+        },
+        {
+          "file": "src/Logs/MonologOtlpHandler.php",
+          "sha256": "be07a1687301d1f26f823ec95944610a64242bdf240bd42c82ce58753b66bd43"
+        },
+        {
+          "file": "src/Logs/MonologTraceProcessor.php",
+          "sha256": "69ff42ddf9e1659e9deddf11861e73962c7dc22fe982f9bc8bce5f19721b5554"
+        },
+        {
+          "file": "src/Metrics/Counter.php",
+          "sha256": "c7dd09e10d4c10923471dad84f376c7fcbc9f78dbb8c6c3248504bf552a32d99"
+        },
+        {
+          "file": "src/Metrics/Gauge.php",
+          "sha256": "179074b65b9bcfb21e45922d294b3ed0ea2e841d8955240e549dcff09d7c4844"
+        },
+        {
+          "file": "src/Metrics/Histogram.php",
+          "sha256": "6a16f1cc9aedfb3baff4b48871e0b243e57e16728c6549f1ba3bcae4409f1d9d"
+        },
+        {
+          "file": "src/Metrics/MetricFacade.php",
+          "sha256": "33291958a8523ff00b8bcae26b069d892579307e43bd5b20cd468f3385a8e7e2"
+        },
+        {
+          "file": "src/Observability.php",
+          "sha256": "995500e1f9a35ad12f89818cc8eeed190543919c478549e4a37ebb7d52f21d5c"
+        },
+        {
+          "file": "src/ObservabilityHandle.php",
+          "sha256": "9713baa80c824de531703bdd138cfee1b84baa444ca0312f073cadd5aef3049b"
+        },
+        {
+          "file": "src/Privacy/AttributeRedactor.php",
+          "sha256": "07929673ae70ccb27bf28057e0a6aadcfe2a2528e39e840a9f7369ff89643529"
+        },
+        {
+          "file": "src/Privacy/DbStatementSanitizer.php",
+          "sha256": "debe51bbbd4a8053cd6dd0d23738276d5761d252cc133155685d5bac45c776c0"
+        },
+        {
+          "file": "src/Privacy/IdentifierHasher.php",
+          "sha256": "ac59fc1251fdfbd67ea5dd1fe53c6bb7e00e935744002e7f8d07d468ccb7cefc"
+        },
+        {
+          "file": "src/Privacy/UrlSanitizer.php",
+          "sha256": "64788d374b6eb3281628e924d33df634f66aa6f0c5d4e6dcc37827e5fb9a6e97"
+        },
+        {
+          "file": "src/Propagation/BaggagePropagator.php",
+          "sha256": "df1e080c97dd6990e967f047403797ede2a57d19f8da11e792ae9f019f702cfd"
+        },
+        {
+          "file": "src/Propagation/TraceContextPropagator.php",
+          "sha256": "d27840f10da5536a4c48a95ed0dc9f7d1c37aef76143de15039e28fd04207312"
+        },
+        {
+          "file": "src/Resource/ResourceBuilder.php",
+          "sha256": "e7e89266a29024fd2a646143fa641b7aaa6a87906434a22d9e442be5671d10b9"
+        },
+        {
+          "file": "src/Support/Clock.php",
+          "sha256": "29baaafba67fd25fb847a6ae5e40207953ceca709e22523cd1e6b7910010f9f7"
+        },
+        {
+          "file": "src/Support/HeaderSanitizer.php",
+          "sha256": "059f833f30c985d53ce42661de79b310bb5905382a1fb018f7532a51abf47a66"
+        },
+        {
+          "file": "src/Support/IdGenerator.php",
+          "sha256": "267ca11aafb74cc4c73489e43123d103c9923eed422fb451c0869d8be2896019"
+        },
+        {
+          "file": "src/Support/OtlpAttributes.php",
+          "sha256": "f489b340c4f7763facaa7a6deeb385176d172245350d61762060fa494f9d6425"
+        },
+        {
+          "file": "src/Support/ShutdownRegistry.php",
+          "sha256": "0dbd2ccc22a0c0bd7b7d9b836154a5e42dddd4acfe2100758866e3af73b03360"
+        },
+        {
+          "file": "src/Support/TelemetryValueLimiter.php",
+          "sha256": "00552e58bdd6b0022e030f52e3d33b2dad327ff30cc158b250ba00043437d42e"
+        },
+        {
+          "file": "src/Trace/NoopSpan.php",
+          "sha256": "57bbefe26a5c493f2afb55180a913011176a3f323cc8a9e8f431b7b5da82fb90"
+        },
+        {
+          "file": "src/Trace/NoopTracer.php",
+          "sha256": "d2a109e20455df289ba479646678846bc58f7709760fc31247bda6032adc0286"
+        },
+        {
+          "file": "src/Trace/Sampler/ParentBasedTraceIdRatioSampler.php",
+          "sha256": "dcab935368b615f9e63467b05c8bc1863ce52088343c0bf36d74abf1311485f5"
+        },
+        {
+          "file": "src/Trace/Sampler/SamplerInterface.php",
+          "sha256": "0b01edb1ad3782fe2feb9e30e7610e7b0f967ebced1cc0ad7f579c8cc81238b4"
+        },
+        {
+          "file": "src/Trace/Span.php",
+          "sha256": "5ef6593ce765f1aa64862614b068d399309935a38fca154c597b8dda3d7f83c6"
+        },
+        {
+          "file": "src/Trace/SpanContext.php",
+          "sha256": "9585117796eedab7ebd5e71addf03bf6d91c88736f277b7d13aac061590e983b"
+        },
+        {
+          "file": "src/Trace/SpanProcessor.php",
+          "sha256": "1d62a96d0c2c02c3dd63a59031cb320c233d2724da16149872f274d211423e9b"
+        },
+        {
+          "file": "src/Trace/Tracer.php",
+          "sha256": "460480ed56650b9e17b794222815af9470ac562164bb9f1f3971c15e99ab9eaa"
+        }
+      ],
+      "repository": "https://github.com/elven-observability/opentelemetry-instrumentation-php-legacy",
+      "tag_object": "482e9777ee5ea293f2b3de7010efed6700496e69",
+      "fixtures_sha256": {
+        "composer.json": "a793d22544ea92c22acf0acbfaf0d01a498d529ee0a29d68dc9577b8fd364b34",
+        "composer.lock": "967842e7cca7813751d7c2e8736440a41232fd5b48a863e02c2bf10da7ca9dbe"
+      }
+    }
+  ]
+}

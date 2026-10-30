@@ -1,0 +1,126 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "b3dfd1e753a73a5fe20dc34e6a8388ac",
+    "packages": [
+        {
+            "name": "elven-observability/opentelemetry-instrumentation-php-legacy",
+            "version": "v0.8.0-rc.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/elven-observability/opentelemetry-instrumentation-php-legacy",
+                "reference": "8cbdef82827a34bc9e2e059264e9d2ae86dd9b00"
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.3.13"
+            },
+            "require-dev": {
+                "guzzlehttp/guzzle": "^7.16",
+                "monolog/monolog": "^1.27 || ^2.9",
+                "phpstan/phpstan": "^1.10",
+                "phpunit/phpunit": "^9.6",
+                "slim/slim": "^2.6",
+                "squizlabs/php_codesniffer": "^3.7"
+            },
+            "suggest": {
+                "ext-curl": "Recommended for low-overhead OTLP HTTP export and curl header injection examples.",
+                "ext-soap": "Required only for SOAP/WCF instrumentation examples.",
+                "guzzlehttp/guzzle": "Required only for Guzzle middleware integration.",
+                "monolog/monolog": "Required only for Monolog 1/2 log correlation and OTLP log handler.",
+                "slim/slim": "Required only for Slim 2 examples."
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Elven\\Observability\\PhpLegacy\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Elven\\Observability\\PhpLegacy\\Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "lint": [
+                    "find src tests examples benchmarks -path '*/vendor' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l"
+                ],
+                "cs": [
+                    "phpcs"
+                ],
+                "stan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "test": [
+                    "phpunit"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "test:integration": [
+                    "phpunit --testsuite integration"
+                ],
+                "test:compat:php74-legacy": [
+                    "composer update --working-dir=tests/Compatibility/php74-guzzle7-monolog2 --no-interaction --prefer-dist",
+                    "@php tests/Compatibility/php74-guzzle7-monolog2/verify.php"
+                ],
+                "bench": [
+                    "php benchmarks/run.php"
+                ],
+                "collector:fake": [
+                    "php examples/fake-collector/server.php"
+                ],
+                "check": [
+                    "@lint",
+                    "@cs",
+                    "@stan",
+                    "@test",
+                    "@test:compat:php74-legacy",
+                    "@bench"
+                ]
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Elven Observability",
+                    "email": "opensource@elvenobservability.com"
+                }
+            ],
+            "description": "Privacy-first OpenTelemetry-compatible traces, metrics, OTLP logs, and log correlation for legacy PHP applications without PECL dependencies.",
+            "homepage": "https://github.com/elven-observability/opentelemetry-instrumentation-php-legacy",
+            "keywords": [
+                "legacy-php",
+                "metrics",
+                "monolog",
+                "observability",
+                "opentelemetry",
+                "tracing",
+                "traffic-attribution"
+            ],
+            "support": {
+                "issues": "https://github.com/elven-observability/opentelemetry-instrumentation-php-legacy/issues",
+                "source": "https://github.com/elven-observability/opentelemetry-instrumentation-php-legacy"
+            },
+            "time": "2026-10-29T23:31:50+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "elven-observability/opentelemetry-instrumentation-php-legacy": 5
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {},
+    "platform-dev": {},
+    "platform-overrides": {
+        "php": "7.3.13"
+    },
+    "plugin-api-version": "2.9.0"
+}

@@ -1,0 +1,80 @@
+name: Qualify public PHP RC tags
+run-name: PHP RC runtime qualification ${{ github.run_id }} attempt ${{ github.run_attempt }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_immutable_rcs:
+        description: Run the fixed public v0.2.0-rc.1 and v0.8.0-rc.1 consumers
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_immutable_rcs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout qualification controls only
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup exact PHP and Composer tooling
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5.12'
+          extensions: json, mbstring
+          tools: composer:2.11.0
+          coverage: none
+
+      - name: Setup exact current LTS Node tooling
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.13.0'
+          check-latest: false
+          package-manager-cache: false
+
+      - name: Qualify the two frozen public tags
+        shell: bash
+        env:
+          QUAL_CONTROL_SHA: ${{ github.sha }}
+          QUAL_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          QUAL_RUN_ID: ${{ github.run_id }}
+          QUAL_RUN_ATTEMPT: ${{ github.run_attempt }}
+          QUAL_WORKFLOW_REF: ${{ github.workflow_ref }}
+          QUAL_REPOSITORY: ${{ github.repository }}
+          QUAL_RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          set -euo pipefail
+          PHP_BIN="$(command -v php)"
+          COMPOSER_BIN="$(command -v composer)"
+          NODE_BIN="$(command -v node)"
+          exec /usr/bin/env -i PATH=/usr/bin:/bin LANG=C \
+            ELVEN_QUAL_PHP="$PHP_BIN" ELVEN_QUAL_COMPOSER="$COMPOSER_BIN" \
+            ELVEN_QUAL_RUNNER_TEMP="$QUAL_RUNNER_TEMP" \
+            ELVEN_QUAL_CONTROL_SHA="$QUAL_CONTROL_SHA" \
+            ELVEN_QUAL_WORKFLOW_SHA="$QUAL_WORKFLOW_SHA" \
+            ELVEN_QUAL_RUN_ID="$QUAL_RUN_ID" ELVEN_QUAL_RUN_ATTEMPT="$QUAL_RUN_ATTEMPT" \
+            ELVEN_QUAL_WORKFLOW_REF="$QUAL_WORKFLOW_REF" ELVEN_QUAL_REPOSITORY="$QUAL_REPOSITORY" \
+            "$NODE_BIN" qualification/public-tags/qualify.mjs --qualify
+
+      - name: Upload metadata receipts only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: php-public-rc-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: warn
+          overwrite: false
+          path: |
+            ${{ runner.temp }}/elven-php-tag-receipts/receipt.json
+            ${{ runner.temp }}/elven-php-tag-receipts/runtime.json
+            ${{ runner.temp }}/elven-php-tag-receipts/source-bindings.json
+            ${{ runner.temp }}/elven-php-tag-receipts/results.json
