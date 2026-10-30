@@ -39,6 +39,16 @@ Supported test matrix:
 
 PHP 8.0 and 8.1 are outside this package's supported matrix. This is the Elven package policy, not an assertion that the upstream SDK/exporter requires PHP 8.2; verify upstream package requirements separately.
 
+## Public-Tag CLI Qualification
+
+The [2026-10-30 UTC hosted run](https://github.com/elven-observability/opentelemetry-instrumentation-php/actions/runs/40997492213) (attempt 1) passed 12 healthy CLI consumer cases across the modern and legacy public RC tags, using PHP 8.5.12 CLI, Node 26.13.0 and Composer 2.11.0 on Linux x64. Product source came from the public tags, not the workflow checkout. The [four-JSON metadata artifact](https://github.com/elven-observability/opentelemetry-instrumentation-php/actions/runs/40997492213/artifacts/12952450208) and [separate runtime addendum](https://github.com/elven-observability/opentelemetry-instrumentation-php/releases/download/v0.2.0-rc.1/php-hosted-runtime-addendum-40997492213.json) bind the run, sources, locked graphs and reported binary hashes.
+
+For this package's `v0.2.0-rc.1` tag, six cases (1/10 operations, each repeated three times) recorded 33 decoded spans, 33 logs and a metric operation sum of 33. All three OTLP signals arrived during forceFlush; no known synthetic canaries were observed. The approved harness checked 49 own-source files and the frozen 35-package installed graph, with Composer plugins/scripts disabled and no dependency updates. These are scoped synthetic privacy checks, not universal PII detection or a fresh dependency-security audit.
+
+The hosted PHP `memory_limit` was `-1`; the runner reported 4 logical CPUs and 16,759,304,192 bytes of host memory. This does not qualify 256/512 MiB or 2-CPU profiles, RSS/CPU/overhead budgets, FPM/mod_php, frameworks, other PHP versions, Windows, TLS/proxy/DNS, failure/backpressure or customer environments. The runtime-security caveats above still apply; these CLI cases do not waive the conditional session issue or native-library/Windows checks.
+
+The [original PHP 8.5.10 receipt](https://github.com/elven-observability/opentelemetry-instrumentation-php/releases/download/v0.2.0-rc.1/modern-public-receipt.json) remains unchanged as dated compatibility/delivery evidence; it has not been relabeled as PHP 8.5.12 qualification. The addendum is additional evidence, not a new package version, repack, tag or automatic upgrade.
+
 ## Install
 
 The verified distribution method is an explicit Git/VCS repository. Public Packagist lookup returned HTTP 404 on 2026-10-29; this is not a target-network diagnosis and no Packagist token is required to consume Git tags.
