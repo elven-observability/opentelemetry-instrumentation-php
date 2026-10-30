@@ -37,11 +37,11 @@ PHP 8.0 and 8.1 are outside this package's supported matrix. This is the Elven p
 
 The verified distribution method is an explicit Git/VCS repository. Public Packagist lookup returned HTTP 404 on 2026-10-29; this is not a target-network diagnosis and no Packagist token is required to consume Git tags.
 
-Installation from Git tag `v0.1.0` was verified, but that baseline contains the audit findings. The next candidate is the optional `0.2.0-rc.1` / `v0.2.0-rc.1`, **not published yet**. This is not the previously planned transparent `0.1.1` patch. Existing stable `^0.1` constraints do not select this new minor RC. Review [MIGRATION.md](MIGRATION.md) before opting in. The following commands are conditional on the reviewed immutable tag existing:
+Installation from Git tag `v0.1.0` was verified, but that baseline contains the audit findings. The optional [0.2.0-rc.1 Git/VCS prerelease](https://github.com/elven-observability/opentelemetry-instrumentation-php/releases/tag/v0.2.0-rc.1) is now published and checked through a fresh public-tag consumer. The release includes the source/CI/consumer receipt. This is not the previously planned transparent `0.1.1` patch. Existing stable `^0.1` constraints do not select this new minor RC. Review [MIGRATION.md](MIGRATION.md) before opting in:
 
 ```bash
 composer config repositories.elven-php git https://github.com/elven-observability/opentelemetry-instrumentation-php
-# Only after the reviewed immutable v0.2.0-rc.1 tag is published:
+# Explicit opt-in after reviewing the migration contract:
 composer require elven-observability/opentelemetry-instrumentation-php:0.2.0-rc.1
 ```
 
