@@ -133,6 +133,23 @@ $handle->forceFlush();
 $handle->shutdown();
 ```
 
+### Custom latency histograms
+
+Pass explicit bucket boundaries in the same unit as the measurements:
+
+```php
+Observability::metrics()->histogram(
+    'app.db.operation.duration',
+    's',
+    explicitBucketBoundaries: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0],
+)->record($elapsedSeconds);
+```
+
+The first creation for each name and unit sets the advisory; later calls reuse that instrument.
+Omitting the boundaries, or supplying an invalid list, keeps the OpenTelemetry defaults.
+Use at most 128 finite numbers in strictly increasing order; an empty list requests a single bucket.
+An OpenTelemetry view can override the advisory.
+
 ## Laravel
 
 Laravel auto-discovers the service provider through Composer.

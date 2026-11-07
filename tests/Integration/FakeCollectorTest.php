@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Elven\Observability\Php\Tests\Integration;
 
 use Elven\Observability\Php\Observability;
+use Opentelemetry\Proto\Collector\Metrics\V1\ExportMetricsServiceRequest;
 use PHPUnit\Framework\TestCase;
 
 final class FakeCollectorTest extends TestCase
@@ -70,6 +71,53 @@ final class FakeCollectorTest extends TestCase
         foreach ($lines as $line) {
             self::assertGreaterThan(0, $line['length']);
         }
+    }
+
+    public function testHttpProtobufHistogramExportsExplicitBoundsAndBucketCounts(): void
+    {
+        $handle = Observability::init([
+            'enabled' => true,
+            'service_name' => 'php-histogram-test',
+            'environment' => 'test',
+            'otlp_endpoint' => 'http://127.0.0.1:' . $this->port,
+            'otlp_protocol' => 'http/protobuf',
+            'timeout_millis' => 1000,
+            'traces_exporter' => 'none',
+            'metrics_exporter' => 'otlp',
+            'logs_exporter' => 'none',
+        ]);
+
+        $metrics = Observability::metrics();
+        $boundaries = [0.005, 0.02, 0.1];
+        $histogram = $metrics->histogram('db.client.operation.duration', 's', 'DB duration', $boundaries);
+        self::assertSame($histogram, $metrics->histogram('db.client.operation.duration', 's'));
+        foreach ([0.005, 0.012, 0.02, 0.15] as $seconds) {
+            $histogram->record($seconds);
+        }
+        $handle->forceFlush();
+        $handle->shutdown();
+
+        $requests = array_values(array_filter(
+            $this->readLines(),
+            static fn (array $line): bool => $line['path'] === '/v1/metrics',
+        ));
+        self::assertNotEmpty($requests);
+        self::assertSame('application/x-protobuf', $requests[0]['content_type']);
+        $body = base64_decode((string) $requests[0]['body_base64'], true);
+        self::assertIsString($body);
+        $request = new ExportMetricsServiceRequest();
+        $request->mergeFromString($body);
+
+        $metric = $request->getResourceMetrics()[0]->getScopeMetrics()[0]->getMetrics()[0];
+        self::assertSame('db.client.operation.duration', $metric->getName());
+        self::assertSame('s', $metric->getUnit());
+        self::assertSame('DB duration', $metric->getDescription());
+        $exportedHistogram = $metric->getHistogram();
+        self::assertNotNull($exportedHistogram);
+        $point = $exportedHistogram->getDataPoints()[0];
+        self::assertSame($boundaries, iterator_to_array($point->getExplicitBounds(), false));
+        self::assertSame([1, 2, 0, 1], array_map('intval', iterator_to_array($point->getBucketCounts(), false)));
+        self::assertSame(4, (int) $point->getCount());
     }
 
     public function testHttpJsonPayloadContainsCorrelatableTraceMetricAndLogData(): void

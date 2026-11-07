@@ -10,6 +10,8 @@ use Throwable;
 
 final class MetricFacade
 {
+    private const MAX_EXPLICIT_BUCKET_BOUNDARIES = 128;
+
     /** @var array<string, Counter> */
     private array $counters = [];
     /** @var array<string, Histogram> */
@@ -47,8 +49,13 @@ final class MetricFacade
         return $this->counters[$key];
     }
 
-    public function histogram(string $name, ?string $unit = null, ?string $description = null): Histogram
-    {
+    /** @param list<int|float>|null $explicitBucketBoundaries Strictly increasing boundaries in the instrument unit. */
+    public function histogram(
+        string $name,
+        ?string $unit = null,
+        ?string $description = null,
+        ?array $explicitBucketBoundaries = null,
+    ): Histogram {
         if (strlen($name) > 255 || strlen($unit ?? '') > 63 || strlen($description ?? '') > 1024) {
             return new Histogram(null, $this->redactor);
         }
@@ -60,7 +67,10 @@ final class MetricFacade
             $instrument = null;
             if ($this->meter !== null) {
                 try {
-                    $instrument = $this->meter->createHistogram($name, $unit, $description);
+                    $advisory = $this->histogramAdvisory($explicitBucketBoundaries);
+                    $instrument = $advisory === []
+                        ? $this->meter->createHistogram($name, $unit, $description)
+                        : $this->meter->createHistogram($name, $unit, $description, $advisory);
                 } catch (Throwable) {
                     $instrument = null;
                 }
@@ -93,5 +103,32 @@ final class MetricFacade
         }
 
         return $this->gauges[$key];
+    }
+
+    /**
+     * @param array<array-key, mixed>|null $boundaries
+     * @return array{ExplicitBucketBoundaries?: list<float>}
+     */
+    private function histogramAdvisory(?array $boundaries): array
+    {
+        if ($boundaries === null || count($boundaries) > self::MAX_EXPLICIT_BUCKET_BOUNDARIES || !array_is_list($boundaries)) {
+            return [];
+        }
+
+        $normalized = [];
+        $previous = -INF;
+        foreach ($boundaries as $boundary) {
+            if (!is_int($boundary) && !is_float($boundary)) {
+                return [];
+            }
+            $value = (float) $boundary;
+            if (!is_finite($value) || $value <= $previous) {
+                return [];
+            }
+            $normalized[] = $value;
+            $previous = $value;
+        }
+
+        return ['ExplicitBucketBoundaries' => $normalized];
     }
 }
